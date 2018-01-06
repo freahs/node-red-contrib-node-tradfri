@@ -2,11 +2,11 @@
 
 Node-RED node to interface with IKEA Tradfri lights without any external binaries thanks to [node-tradfri](https://github.com/AlCalzone/node-tradfri-client).
 
-* All operations (brightness, color temperature, color, etc.) supported by the gateway are available
+* All operations (brightness, color temperature, color, etc.) supported by the gateway are available.
 * Support for observation (i.e. reporting on changes to the light).
 
 ## Usage
-Only one node (besides the config node) are necessary for operation. After the configuration has been sucessfull -- either by providing an existing identity and PSK or by generating new ones by providing the security code from the gateway -- simply select which light to target and check if the node should observe the device as well.
+Only one node (besides the config node) are necessary for operation. After the configuration has been successful -- either by providing an existing identity and PSK or by generating new ones by providing the security code from the gateway -- simply select which light to target and check if the node should observe the device as well.
 
 ### Controlling the node
 Nodes can be programmatically controlled by sending a message with `msg.payload` set to one of the following strings:
@@ -20,7 +20,7 @@ Lights can be controlled by sending an objet with one or more of the following p
 * `color` `string` Sets the color of the light. For WS-bulbs, `F5FAF6`, `F1E0B5` and `EFD275` will set the light to the default cold, normal and warm temperatures respectively.
 * `transition` `number` The default transition time for operations. Will only work for single operation commands and not for on/off. Defaults to 0. 
 * `hue` `number` `[0,365]` Sets the hue of the light. Only for CWS. (UNTESTED)
-* `saturation``number` `[0,100]` Sets the saturation of the light. Only for CWS. (UNTESTED)
+* `saturation` `number` `[0,100]` Sets the saturation of the light. Only for CWS. (UNTESTED)
 
 ### Output
 If the node is set to observe and the target light is updated or if triggered manually by sending a `"status"` request as `msg.payload` to the node, the node will send a `msg.payload` for which the `light` property is the current status of the light.
