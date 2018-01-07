@@ -23,7 +23,7 @@ Lights can be controlled by sending an objet with one or more of the following p
 * `saturation` `number` `[0,100]` Sets the saturation of the light. Only for CWS. (UNTESTED)
 
 ### Output
-If the node is set to observe and the target light is updated or if triggered manually by sending a `"status"` request as `msg.payload` to the node, the node will send a `msg.payload` for which the `light` property is the current status of the light.
+If the node is set to observe and the target light is updated or if triggered manually by sending a `"status"` request as `msg.payload` to the node, the node will send a `msg.payload` with the current status of the light.
 * `id` `number` The id of the light.
 * `name` `string` The given name of the light.
 * `model` `string` The model of the light.
@@ -40,3 +40,13 @@ If the node is set to observe and the target light is updated or if triggered ma
 * `seen` `number` When the light was last interacted with by the gateway (or similar), measured in epoch time.
 * `type` `number` The type of device where 2 is light.
 * `power` `number` The type of power source powering the light. Will most likely always be 1.
+
+## Changelog
+
+### 0.1.2
+* Moved output status object from `msg.payload.light` to `msg.payload`.
+* Updated security code, identity and PSK to be saved as credentials in config.
+* Updated info panels and tweaked node appearance.
+
+### 0.1.1
+* Published to NPM

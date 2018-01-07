@@ -60,9 +60,9 @@ module.exports = function (RED) {
         RED.nodes.createNode(node, config);
         node.name = config.name;
         node.address = config.address;
-        node.securityCode = config.securityCode;
-        node.identity = config.identity;
-        node.psk = config.psk;
+        node.securityCode = node.credentials.securityCode;
+        node.identity = node.credentials.identity;
+        node.psk = node.credentials.psk;
         if ((node.identity == null && node.psk != null) || (node.identity != null && node.psk == null)) {
             RED.log.error("Must provide both identity and PSK or leave both blank to generate new credentials from security code.");
         }
@@ -169,7 +169,7 @@ module.exports = function (RED) {
             for (let instanceId in _listeners) {
                 if (_listeners[instanceId].hasOwnProperty(nodeId)) {
                     delete _listeners[instanceId][nodeId];
-                    RED.log.debug(`[Tradfri: ${nodeId}] unregistered event listeners`);
+                    RED.log.info(`[Tradfri: ${nodeId}] unregistered event listeners`);
                 }
             }
         };
@@ -179,7 +179,13 @@ module.exports = function (RED) {
             RED.log.debug(`[Tradfri: ${node.id}] Config was closed`);
         });
     }
-    RED.nodes.registerType("tradfri-connection", TradfriConnectionNode);
+    RED.nodes.registerType("tradfri-connection", TradfriConnectionNode, {
+        credentials: {
+            securityCode: { type: "text" },
+            identity: { type: "text" },
+            psk: { type: "text" }
+        }
+    });
     function TradfriNode(config) {
         var node = this;
         RED.nodes.createNode(node, config);
@@ -189,6 +195,9 @@ module.exports = function (RED) {
         node.observe = config.observe;
         var _config = RED.nodes.getNode(config.connection);
         var _prev = {};
+        var _send = (payload) => {
+            node.send({ topic: "tradfri", payload: payload });
+        };
         var _getPayload = (accessory) => {
             let light = lightFromAccessory(accessory);
             light['prev'] = Object.assign({}, _prev);
@@ -197,7 +206,7 @@ module.exports = function (RED) {
         var _deviceUpdated = (accessory) => {
             let ret = _getPayload(accessory);
             _prev = lightFromAccessory(accessory);
-            node.send({ payload: { light: ret } });
+            _send(ret);
             RED.log.trace(`[Tradfri: ${node.id}] recieved update for '${accessory.name}' (${accessory.instanceId})`);
         };
         var _getTargetId = (msg) => {
@@ -215,24 +224,20 @@ module.exports = function (RED) {
                 throw new Error('No valid target device');
             }
         };
-        var _handleDirectStatus = (msg) => __awaiter(this, void 0, void 0, function* () {
+        var _handleDirectStatus = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let client = yield _config.getClient();
                 let res = yield client.request('15001/' + node.deviceId, 'get');
-                msg.payload = res;
-                node.send(msg);
+                _send(res);
             }
             catch (e) {
-                msg.payload = e;
-                node.send(msg);
+                _send(e);
             }
         });
-        var _handleStatus = (msg) => __awaiter(this, void 0, void 0, function* () {
+        var _handleStatus = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let accessory = yield _config.getLight(node.deviceId);
-                msg.payload.light = _getPayload(accessory);
-                delete msg.payload.status;
-                node.send(msg);
+                _send(_getPayload(accessory));
                 RED.log.trace(`[Tradfri: ${node.id}] Status request successful`);
             }
             catch (e) {
@@ -290,10 +295,10 @@ module.exports = function (RED) {
                     let isDirect = msg.payload.hasOwnProperty('direct');
                     let isStatus = msg.payload.hasOwnProperty('status');
                     if (isDirect && isStatus) {
-                        _handleDirectStatus(msg);
+                        _handleDirectStatus();
                     }
                     else if (isStatus) {
-                        _handleStatus(msg);
+                        _handleStatus();
                     }
                     else if (isDirect) {
                         _handleDirectLightOp(msg.payload);

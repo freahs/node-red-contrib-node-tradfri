@@ -1,13 +1,15 @@
-<!-- ======= CONNECTION ========= -->
+<!-- Config Node -->
 <script type="text/javascript">
     RED.nodes.registerType('tradfri-connection',{
         category: 'config',
         defaults: {
-            name:         { value:"" },
             address:      { value:"", required:true },
-            securityCode: { value:"" }, 
-            identity:     { value:"" },
-            psk:          { value:"" },
+            name:         { value:"" }
+        },
+        credentials: {
+            securityCode: { type:"text" },
+            identity:     { type:"text" },
+            psk:          { type:"text" }
         },
         label: function() {
             return this.name || "tradfri@" + this.address;
@@ -17,28 +19,37 @@
 
 <script type="text/x-red" data-template-name="tradfri-connection">
     <div class="form-row">
-        <label for="node-config-input-name"><i class="icon-bookmark"></i> Name</label>
-        <input type="text" id="node-config-input-name">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-address"><i class="icon-bookmark"></i> Address</label>
+        <label for="node-config-input-address"><i class="fa fa-globe"></i> Address</label>
         <input type="text" id="node-config-input-address">
     </div>
     <div class="form-row">
-        <label for="node-config-input-securityCode"><i class="icon-bookmark"></i> Security Code</label>
+        <label for="node-config-input-securityCode"><i class="fa fa-gears"></i> Security Code</label>
         <input type="text" id="node-config-input-securityCode">
     </div>
     <div class="form-row">
-        <label for="node-config-input-identity"><i class="icon-bookmark"></i> Identity</label>
+        <label for="node-config-input-identity"><i class="fa fa-address-card-o"></i> Identity</label>
         <input type="text" id="node-config-input-identity">
     </div>
     <div class="form-row">
-        <label for="node-config-input-psk"><i class="icon-bookmark"></i> Pre-shared key</label>
+        <label for="node-config-input-psk"><i class="fa fa-lock"></i> Pre-shared key</label>
         <input type="text" id="node-config-input-psk">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name">
     </div>
 </script>
 
-<!-- ======= THREADFREE ========= -->
+<script type="text/x-red" data-help-name="tradfri-connection">
+    <ul>
+        <li><i class="fa fa-globe"></i> <b>Address:</b> The address to your gateway.</li>
+        <li><i class="fa fa-gears"></i> <b>Security code:</b> The security code on the backside of your gateway. You only need to enter this if you <em>don't</em> have an identiy and PSK. In that case identity and PSK will be generated for you using the security key.</li>
+        <li><i class="fa fa-address-card-o"></i> <b>Address:</b> The identiy used to access the gateway. Used together with a PSK.</li>
+        <li><i class="fa fa-lock"></i> <b>Pre-shared key:</b> The passkey used to access the gateway. Used together with an identity.</li>
+    </ul>
+</script>
+
+<!--- I/O Node -->
 <script type="text/javascript">
     var updateDevices = (currentDeviceId) => {
         let configNodeId = $('#node-input-connection').find(":selected").val();
@@ -61,7 +72,7 @@
    
     RED.nodes.registerType('tradfri',{
         category: 'function',
-        color: '#84E87A',
+        color: '#9FE597',
         defaults: {
             name:            {value:""},
             deviceId:       {value: "", required:true, validate:RED.validators.number()},
@@ -69,9 +80,10 @@
             connection:      {value:"", type:"tradfri-connection"},
             observe: { value:true, required: true },
         },
+        align: 'right',
         inputs:1,
         outputs:1,
-        icon: "light.png",
+        icon: 'light.png',
         label: function() {
             return this.deviceName || "tradfri";
         },
@@ -96,11 +108,7 @@
 
 <script type="text/x-red" data-template-name="tradfri">
     <div class="form-row">
-        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
-    </div>
-    <div class="form-row">
-        <label for="node-input-connection"><i class="fa fa-bookmark"></i> Connection</label>
+        <label for="node-input-connection"><i class="fa fa-cog"></i> Connection</label>
         <input type="text" id="node-input-connection" placeholder="Connection">
     </div>
     <div class="form-row">
@@ -120,27 +128,50 @@
         <input type="checkbox" id="node-input-observe" style="display: inline-block; width: auto; vertical-align: top;">
         <label for="node-input-observe" style="width: 70%;" >Observe device?</label>
     </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
 </script>
 
 <script type="text/x-red" data-help-name="tradfri">
     <p>Interface for IKEA Tradfri devices</p>
     <h3>Inputs</h3>
     <dl class="message-properties">
-        <dt> payload <span class="property-type"> string </span> </dt>
-        <dd> A single command can be sent as a string to the node. <dd>
-        <dt> payload <span class="property-type"> object </span> </dt>
-        <dd> An object with one or more commands targeting the light. </dd>
+        <dt> payload <span class="property-type"> string  | object</span> </dt>
+        <dd> The payload can either be a single command to the node (such as a status update request) sent as a string or an object with one or more commands targeting the light.</dd>
     </dl>
     <h3>Outputs</h3>
     <dl class="message-properties">
-        <dt> payload.light <span class="property-type"> object </span></dt>
+        <dt> payload <span class="property-type"> object </span></dt>
         <dd> The status of the light. </dd>
     </dl>
 
     <h3>Details</h3>
     The tradfri node acts as both input and output for a IKEA Tradfri lighbulb.
 
-    If the node is set to observe it will send a message with the lights current properties as payload every time the light is updated:
+    <h2>Controlling the node</h2>
+    Nodes can be programmatically controlled by sending a message with <code>msg.payload</code> set to one of the following strings:
+    <ul>
+        <li><code>"status"</code> The node will output the current status of its target light.
+    </ul>
+
+    <h2>Controlling the lights</h2>
+    Lights can be controlled by sending an objet with one or more of the following properties as <code>msg.payload</code> to the node.
+        <ul>
+        <!-- <li><code>id</code><code>number</code> The id of the light <li>
+        <li><code>name</code><code>string</code> The given name of the light <li>  -->
+        <li><code>on</code><code>boolean</code><li> Turn the light on or off.</li>
+        <li><code>brightness</code><code>number</code> The brightness of the light [0,100]</li>
+        <li><code>colorTemperature</code><code>number</code> The color temperature of the light [0,100]</li>
+        <li><code>color</code><code>string</code> Sets the color of the light. For WS-bulbs, <code>F5FAF6</code>, <code>F1E0B5</code> and <code>EFD275</code> will set the light to the default cold, normal and warm temperatures respectively.</li>
+        <li><code>transition</code><code>number</code> The default transition time for operations. Will only work for single operation commands and not for on/off. Defaults to 0. </li>
+        <li><code>hue</code><code>number</code> Sets the hue of the light. Only for CWS. [0,365] (UNTESTED)</li>
+        <li><code>saturation</code><code>number</code> Sets the saturation of the light. Only for CWS. [0,100] (UNTESTED)</li>
+    </ul>
+
+    <h2>Observing</h2>
+        If the node is set to observe it will send a message with the lights current properties as payload every time the light is updated:
     <ul>
         <li><code>id</code><code>number</code> The id of the light </li>
         <li><code>name</code><code>string</code> The given name of the light </li>
@@ -158,26 +189,6 @@
         <li><code>seen</code><code>number</code> When the light was last interacted with by the gateway (or similar), measured in epoch time.</li>
         <li><code>type</code><code>number</code> The type of device where 2 is light</li>
         <li><code>power</code><code>number</code> The type of power source powering the light. Will most likely always be 1.</li>
-    </ul>
-
-    <h2>Controlling the node</h2>
-    The can be programmatically controlled by sending a message with <code>msg.payload</code> set to one of the following:
-    <ul>
-        <li><code>status</code> The node will output the current status of its target light.
-    </ul>
-
-    <h2>Controlling the lights</h2>
-    Lights can be controlled by sending an objet with one or more of the following properties as <code>msg.payload</code> to the node.
-        <ul>
-        <!-- <li><code>id</code><code>number</code> The id of the light <li>
-        <li><code>name</code><code>string</code> The given name of the light <li>  -->
-        <li><code>on</code><code>boolean</code><li> Turn the light on or off.</li>
-        <li><code>brightness</code><code>number</code> The brightness of the light [0,100]</li>
-        <li><code>colorTemperature</code><code>number</code> The color temperature of the light [0,100]</li>
-        <li><code>color</code><code>string</code> Sets the color of the light. For WS-bulbs, <code>F5FAF6</code>, <code>F1E0B5</code> and <code>EFD275</code> will set the light to the default cold, normal and warm temperatures respectively.</li>
-        <li><code>transition</code><code>number</code> The default transition time for operations. Will only work for single operation commands and not for on/off. Defaults to 0. </li>
-        <li><code>hue</code><code>number</code> Sets the hue of the light. Only for CWS. [0,365] (UNTESTED)</li>
-        <li><code>saturation</code><code>number</code> Sets the saturation of the light. Only for CWS. [0,100] (UNTESTED)</li>
     </ul>
 
 </script>

@@ -55,9 +55,9 @@ module.exports = function(RED) {
         RED.nodes.createNode(node, config);
         node.name = config.name;
         node.address = config.address;
-        node.securityCode = config.securityCode;
-        node.identity = config.identity;
-        node.psk = config.psk;
+        node.securityCode = node.credentials.securityCode;
+        node.identity = node.credentials.identity;
+        node.psk = node.credentials.psk;
 
         if ((node.identity == null && node.psk != null) || (node.identity != null && node.psk == null)) {
             RED.log.error("Must provide both identity and PSK or leave both blank to generate new credentials from security code.");
@@ -171,7 +171,7 @@ module.exports = function(RED) {
             for (let instanceId in _listeners) {
                 if (_listeners[instanceId].hasOwnProperty(nodeId)) {
                     delete _listeners[instanceId][nodeId];
-                    RED.log.debug(`[Tradfri: ${nodeId}] unregistered event listeners`);
+                    RED.log.info(`[Tradfri: ${nodeId}] unregistered event listeners`);
                 }
             }
         }
@@ -184,7 +184,13 @@ module.exports = function(RED) {
 
     }
 
-    RED.nodes.registerType("tradfri-connection", TradfriConnectionNode);
+    RED.nodes.registerType("tradfri-connection", TradfriConnectionNode, {
+        credentials: {
+            securityCode: {type:"text"},
+            identity: {type:"text"},
+            psk: {type:"text"}
+        }
+    });
 
     function TradfriNode(config) {
         var node = this;
@@ -196,6 +202,10 @@ module.exports = function(RED) {
         var _config  = RED.nodes.getNode(config.connection);
         var _prev = {};
 
+        var _send = (payload: any) => {
+            node.send({topic:"tradfri", payload:payload});
+        }
+
         var _getPayload = (accessory: tradfri.Accessory) => {
             let light = lightFromAccessory(accessory);
             light['prev'] = Object.assign({}, _prev);
@@ -205,7 +215,7 @@ module.exports = function(RED) {
         var _deviceUpdated = (accessory: tradfri.Accessory) => {
             let ret = _getPayload(accessory);
             _prev = lightFromAccessory(accessory);
-            node.send({payload: {light: ret}});
+            _send(ret);
             RED.log.trace(`[Tradfri: ${node.id}] recieved update for '${accessory.name}' (${accessory.instanceId})`);
         }
 
@@ -222,24 +232,20 @@ module.exports = function(RED) {
             }
         }
 
-        var _handleDirectStatus = async (msg: any) => {
+        var _handleDirectStatus = async () => {
             try {
                 let client = await _config.getClient();
                 let res = await client.request('15001/' + node.deviceId, 'get');
-                msg.payload = res;
-                node.send(msg);
+                _send(res);
             } catch (e) {
-                msg.payload = e;
-                node.send(msg);
+                _send(e);
             }
         }
 
-        var _handleStatus = async (msg: any) => {
+        var _handleStatus = async () => {
             try {
                 let accessory = await _config.getLight(node.deviceId);
-                msg.payload.light = _getPayload(accessory);
-                delete msg.payload.status;
-                node.send(msg);
+                _send(_getPayload(accessory));
                 RED.log.trace(`[Tradfri: ${node.id}] Status request successful`);
             } catch (e) {
                 RED.log.info(`[Tradfri: ${node.id}] Status request unsuccessful, '${e.toString()}'`);
@@ -304,9 +310,9 @@ module.exports = function(RED) {
                     let isStatus = msg.payload.hasOwnProperty('status');
 
                     if (isDirect && isStatus) {
-                        _handleDirectStatus(msg);
+                        _handleDirectStatus();
                     } else if (isStatus) {
-                        _handleStatus(msg);
+                        _handleStatus();
                     } else if (isDirect) {
                         _handleDirectLightOp(msg.payload);
                     } else {
