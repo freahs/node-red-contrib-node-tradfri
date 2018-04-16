@@ -90,6 +90,7 @@ module.exports = function(RED) {
                 const {identity, psk} = await client.authenticate(node.credentials.securityCode);
                 node.credentials.identity = identity;
                 node.credentials.psk = psk;
+                RED.nodes.addCredentials(node.id, node.credentials);
             }
             if (await client.connect(node.credentials.identity, node.credentials.psk)) {
               RED.log.trace(`[Tradfri: ${node.id}] Connected using Identity:'${node.credentials.identity}' and PSK: '${node.credentials.psk}'`);
