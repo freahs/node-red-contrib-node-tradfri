@@ -28,7 +28,7 @@
         "typescript": "^2.6.2"
     },
     "dependencies": {
-        "node-tradfri-client": "^0.5.5"
+        "node-tradfri-client": "^0.12.2"
     },
     "node-red": {
         "nodes": {
