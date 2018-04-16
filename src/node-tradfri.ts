@@ -92,11 +92,12 @@ module.exports = function(RED) {
                 node.credentials.psk = psk;
             }
             if (await client.connect(node.credentials.identity, node.credentials.psk)) {
-                client.on("device updated", _deviceUpdatedCallback);
-                client.observeDevices();
-                _client = client;
+              RED.log.trace(`[Tradfri: ${node.id}] Connected using Identity:'${node.credentials.identity}' and PSK: '${node.credentials.psk}'`);
+              client.on("device updated", _deviceUpdatedCallback);
+              client.observeDevices();
+              _client = client;
             } else {
-                throw new Error(`Client not available`);
+              throw new Error(`Client not available`);
             }
         }
 
