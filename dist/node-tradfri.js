@@ -60,13 +60,10 @@ module.exports = function (RED) {
         RED.nodes.createNode(node, config);
         node.name = config.name;
         node.address = config.address;
-        node.securityCode = node.credentials.securityCode;
-        node.identity = node.credentials.identity;
-        node.psk = node.credentials.psk;
-        if ((node.identity == null && node.psk != null) || (node.identity != null && node.psk == null)) {
+        if ((node.credentials.identity == null && node.credentials.psk !== null) || (node.credentials.identity !== null && node.credentials.psk == null)) {
             RED.log.error("Must provide both identity and PSK or leave both blank to generate new credentials from security code.");
         }
-        if (node.identity == null && node.psk == null && node.securityCode == null) {
+        if (node.credentials.identity == null && node.credentials.psk == null && node.credentials.securityCode == null) {
             RED.log.error("Must provide either identity and PSK or a security code to connect to the Tradfri hub");
         }
         var _lights = {};
@@ -89,6 +86,7 @@ module.exports = function (RED) {
             let client = new tradfri.TradfriClient(node.address);
             if (node.credentials.identity == null && node.credentials.psk == null) {
                 const { identity, psk } = yield client.authenticate(node.credentials.securityCode);
+                node.credentials.securityCode = null;
                 node.credentials.identity = identity;
                 node.credentials.psk = psk;
                 RED.nodes.addCredentials(node.id, node.credentials);
