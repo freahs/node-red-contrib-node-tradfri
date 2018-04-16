@@ -14,6 +14,13 @@
         label: function() {
             return this.name || "tradfri@" + this.address;
         }
+        oneditprepare: function() {
+            var node = this;
+            $(document).ready(function() {
+                $('#node-config-input-identity').prop('value', node.credentials.identity);
+                $('#node-config-input-psk').prop('value', node.credentials.psk);
+            });
+        },
     });
 </script>
 
@@ -69,7 +76,7 @@
             });
         });
     };
-   
+
     RED.nodes.registerType('tradfri',{
         category: 'function',
         color: '#9FE597',
@@ -88,7 +95,7 @@
             return this.deviceName || "tradfri";
         },
         oneditprepare: function() {
-            var node = this;            
+            var node = this;
             $('#node-input-connection').change(function(){
                 updateDevices(node.deviceId);
             });
@@ -117,7 +124,7 @@
             <div style="position: absolute; left: 0px; right: 40px;">
                 <select id="node-input-deviceId" style="width: 100%">
                     <option value="-1" selected="selected">None</option>
-                    
+
                 </select>
             </div>
             <a id="node-input-lookup-connection" class="editor-button" style="position: absolute; right: 0px; top: 0px;"><i id="tradfri-deviceId-refresh-spinner" class="fa fa-refresh"></i></a>

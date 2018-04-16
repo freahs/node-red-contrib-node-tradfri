@@ -87,12 +87,12 @@ module.exports = function (RED) {
                 RED.log.info(severity + ", " + message);
             };
             let client = new tradfri.TradfriClient(node.address);
-            if (node.identity == null && node.psk == null) {
-                const { identity, psk } = yield client.authenticate(node.securityCode);
-                node.identity = identity;
-                node.psk = psk;
+            if (node.credentials.identity == null && node.credentials.psk == null) {
+                const { identity, psk } = yield client.authenticate(node.credentials.securityCode);
+                node.credentials.identity = identity;
+                node.credentials.psk = psk;
             }
-            if (yield client.connect(node.identity, node.psk)) {
+            if (yield client.connect(node.credentials.identity, node.credentials.psk)) {
                 client.on("device updated", _deviceUpdatedCallback);
                 client.observeDevices();
                 _client = client;
