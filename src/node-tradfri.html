@@ -13,14 +13,14 @@
         },
         label: function() {
             return this.name || "tradfri@" + this.address;
-        }
+        },
         oneditprepare: function() {
             var node = this;
             $(document).ready(function() {
                 $('#node-config-input-identity').prop('value', node.credentials.identity);
                 $('#node-config-input-psk').prop('value', node.credentials.psk);
             });
-        },
+        }
     });
 </script>
 
