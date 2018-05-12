@@ -58,6 +58,7 @@ module.exports = function(RED) {
 
         if ((node.credentials.identity == null && node.credentials.psk !== null) || (node.credentials.identity !== null && node.credentials.psk == null)) {
             RED.log.error("Must provide both identity and PSK or leave both blank to generate new credentials from security code.");
+            RED.log.trace("[Tradfri: ${node.id}] Identity:'${node.credentials.identity}' and PSK: '${node.credentials.psk}'");
         }
         if (node.credentials.identity == null && node.credentials.psk == null && node.credentials.securityCode == null) {
             RED.log.error("Must provide either identity and PSK or a security code to connect to the Tradfri hub");
