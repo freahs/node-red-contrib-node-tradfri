@@ -1,199 +1,395 @@
 <!-- Config Node -->
 <script type="text/javascript">
-    RED.nodes.registerType('tradfri-connection',{
-        category: 'config',
-        defaults: {
-            address:      { value:"", required:true },
-            name:         { value:"" }
-        },
-        credentials: {
-            securityCode: { type:"text" },
-            identity:     { type:"text" },
-            psk:          { type:"text" }
-        },
-        label: function() {
-            return this.name || "tradfri@" + this.address;
-        },
-        oneditprepare: function() {
-          var node = this;
-          $('#node-config-input-identity').val(node.credentials.identity);
-          $('#node-config-input-psk').val(node.credentials.psk);
-        }
-    });
+  RED.nodes.registerType('tradfri-connection', {
+    category: 'config',
+    defaults: {
+      address: {
+        value: "",
+        required: true
+      },
+      name: {
+        value: ""
+      }
+    },
+    credentials: {
+      securityCode: {
+        type: "text"
+      },
+      identity: {
+        type: "text"
+      },
+      psk: {
+        type: "text"
+      }
+    },
+    label: function() {
+      return this.name || "tradfri@" + this.address;
+    },
+    oneditprepare: function() {
+      var node = this;
+      $('#node-config-input-identity').val(node.credentials.identity);
+      $('#node-config-input-psk').val(node.credentials.psk);
+    }
+  });
 </script>
 
 <script type="text/x-red" data-template-name="tradfri-connection">
-    <div class="form-row">
-        <label for="node-config-input-address"><i class="fa fa-globe"></i> Address</label>
-        <input type="text" id="node-config-input-address">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-securityCode"><i class="fa fa-gears"></i> Security Code</label>
-        <input type="text" id="node-config-input-securityCode">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-identity"><i class="fa fa-address-card-o"></i> Identity</label>
-        <input type="text" id="node-config-input-identity">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-psk"><i class="fa fa-lock"></i> Pre-shared key</label>
-        <input type="text" id="node-config-input-psk">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-config-input-name">
-    </div>
+  <div class="form-row">
+    <label for="node-config-input-address"><i class="fa fa-globe"></i> Address</label>
+    <input type="text" id="node-config-input-address">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-securityCode"><i class="fa fa-gears"></i> Security Code</label>
+    <input type="text" id="node-config-input-securityCode">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-identity"><i class="fa fa-address-card-o"></i> Identity</label>
+    <input type="text" id="node-config-input-identity">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-psk"><i class="fa fa-lock"></i> Pre-shared key</label>
+    <input type="text" id="node-config-input-psk">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-config-input-name">
+  </div>
 </script>
 
 <script type="text/x-red" data-help-name="tradfri-connection">
-    <ul>
-        <li><i class="fa fa-globe"></i> <b>Address:</b> The address to your gateway.</li>
-        <li><i class="fa fa-gears"></i> <b>Security code:</b> The security code on the backside of your gateway. You only need to enter this if you <em>don't</em> have an identiy and PSK. In that case identity and PSK will be generated for you using the security key.</li>
-        <li><i class="fa fa-address-card-o"></i> <b>Address:</b> The identiy used to access the gateway. Used together with a PSK.</li>
-        <li><i class="fa fa-lock"></i> <b>Pre-shared key:</b> The passkey used to access the gateway. Used together with an identity.</li>
-    </ul>
+  <ul>
+    <li><i class="fa fa-globe"></i> <b>Address:</b> The IP address of the  gateway.</li>
+    <li><i class="fa fa-gears"></i> <b>Security code:</b> The security code on the backside of your gateway. You only need to enter this if you <em>do not</em> have an Identiy and PSK. In that case, an Identity and PSK will be generated for you using the security
+      code.</li>
+    <li><i class="fa fa-address-card-o"></i> <b>Identity:</b> The identiy used to access the gateway. Used together with a PSK.</li>
+    <li><i class="fa fa-lock"></i> <b>Pre-shared key:</b> The passkey used to access the gateway. Used together with an Identity.</li>
+  </ul>
 </script>
 
-<!--- I/O Node -->
+<!-- I/O Node -->
 <script type="text/javascript">
-    var updateDevices = (currentDeviceId) => {
-        let configNodeId = $('#node-input-connection').find(":selected").val();
-        if (configNodeId == null || configNodeId === '_ADD_') { return; }
-        $.get('tradfri/lights', {nodeId: configNodeId}, function(resp){
-            let lights = JSON.parse(resp);
-            if (!Array.isArray(lights) || lights.length <= 0) { return; }
-            $('#node-input-deviceId').find('option').not(':first').remove();
-            $.each(lights, function(i, light) {
-                let opt = {};
-                opt.value = light.id;
-                opt.text = light.name;
-                if (light.id === currentDeviceId) {
-                    opt.selected = "selected";
-                }
-                $('#node-input-deviceId').append($('<option>', opt));
-            });
-        });
-    };
 
-    RED.nodes.registerType('tradfri',{
-        category: 'function',
-        color: '#9FE597',
-        defaults: {
-            name:            {value:""},
-            deviceId:       {value: "", required:true, validate:RED.validators.number()},
-            deviceName:     {value: ""},
-            connection:      {value:"", type:"tradfri-connection"},
-            observe: { value:true, required: true },
-        },
-        align: 'right',
-        inputs:1,
-        outputs:1,
-        icon: 'light.png',
-        label: function() {
-            return this.deviceName || "tradfri";
-        },
-        oneditprepare: function() {
-            var node = this;
-            $('#node-input-connection').change(function(){
-                updateDevices(node.deviceId);
-            });
-            $('#tradfri-deviceId-refresh').click(function(){
-                updateDevices(node.deviceId);
-            });
-            $(document).ready(function() {
-                $('#node-input-msgPassthrough').prop('checked', node.observe);
-            });
-        },
-        oneditsave: function() {
-            this.deviceName = $('#node-input-deviceId').find(":selected").text();
+  const loadData = (configNodeId) => {
+    return new Promise((resolve, reject) => {
+      $.get('/tradfri', { nodeId: configNodeId }, result => {
+        resolve(result.data || {});
+      });
+    })
+  }
+
+  const update = (data, currentGroupId, currentLightId) => {
+    const $group = $('#node-input-groupId');
+    const $device = $('#node-input-deviceId');
+    const $sceneList = $('#node-input-scenes-container');
+
+    // Rebuild group select
+    $group
+      .find('option')
+      .not(':first')
+      .remove()
+    ;
+    for (const id in data) {
+      $group.append(
+        $('<option>')
+          .attr('value', id)
+          .text(data[id].name)
+      );
+    }
+
+    if (data[currentGroupId]) {
+      // Rebuild device select
+      $device
+        .find('option')
+        .not(':first')
+        .remove()
+      ;
+
+      for (const id in data[currentGroupId].lights) {
+        $device.append(
+          $('<option>')
+            .attr('value', id)
+            .text(data[currentGroupId].lights[id])
+        );
+      }
+
+      //Rebuild scene list
+      $sceneList
+        .find('li')
+        .remove()
+      ;
+
+      for (const id in data[currentGroupId].scenes) {
+        let $container = $('<li/>',{class:"node-input-scenes-node"});
+        $('<span>',{class:"node-input-scenes-node-label",style:"white-space:nowrap"})
+          .text(data[currentGroupId].scenes[id])
+          .appendTo($container)
+        ;
+        $('<span>',{class:"node-input-scene-node-sublabel"})
+          .text(id)
+          .appendTo($container)
+        ;
+        $sceneList.append($container);
+      }
+    }
+
+    //Select saved option
+    $device.val(currentLightId || '');
+    $group.val(currentGroupId || '');
+  };
+
+  RED.nodes.registerType('tradfri', {
+    category: 'function',
+    color: '#9FE597',
+    defaults: {
+      name: {
+        value: ""
+      },
+      deviceId: {
+        value: "",
+        required: false,
+        validate: RED.validators.number(true)
+      },
+      deviceName: {
+        value: ""
+      },
+      groupId: {
+        value: "",
+        required: true,
+        validate: RED.validators.number()
+      },
+      groupName: {
+        value: ""
+      },
+      connection: {
+        value: "",
+        type: "tradfri-connection"
+      },
+      observe: {
+        value: true,
+        required: true
+      },
+    },
+    align: 'right',
+    inputs: 1,
+    outputs: 1,
+    icon: 'light.png',
+    label: function() {
+      return this.deviceName || this.groupName || "tradfri";
+    },
+    oneditprepare: function() {
+      const node = this;
+      let data = {};
+
+      $('#node-input-connection').change(() => {
+        const connection = $('#node-input-connection').val();
+
+        if (!connection || connection === '_ADD_') {
+          return;
         }
-    });
 
+        loadData(connection)
+          .then(newData => {
+            data = newData;
+            update(data, node.groupId, node.deviceId);
+          })
+        ;
+      });
+
+      $('#tradfri-groupId-refresh').click(() => {
+        loadData($('#node-input-connection').val())
+          .then(newData => {
+            data = newData;
+            update(
+              data,
+              $('#node-input-groupId').val(),
+              $('#node-input-deviceId').val()
+            );
+          })
+        ;
+      });
+
+      $('#node-input-groupId').change(() => {
+        update(data, $('#node-input-groupId').val(), '');
+      });
+
+      $(document).ready(function() {
+        $('#node-input-msgPassthrough').prop('checked', node.observe);
+      });
+    },
+    oneditsave: function() {
+      let $device = $('#node-input-deviceId');
+      let $group = $('#node-input-groupId');
+
+      this.deviceName = $device.val() === '' ? undefined : $device.find('option:selected').text();
+      this.groupName = $group.val() === '' ? undefined : $group.find('option:selected').text();
+    }
+  });
 </script>
+
+<style>
+.node-input-scenes-container-div {
+  min-height: 80px;
+  position: relative;
+  box-sizing: border-box;
+  border-radius: 2px;
+  height: 100px;
+  border: 1px solid #ccc;
+  background: #fbfbfb;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+#node-input-scenes-container {
+    position: relative;
+    list-style-type:none;
+    margin: 0;
+}
+#node-input-scenes-container li {
+    padding: 2px 5px;
+    background: none;
+    font-size: 0.8em;
+    margin:0;
+    white-space: nowrap;
+}
+#node-input-scenes-container li label {
+    margin-bottom: 0;
+    width: 100%;
+}
+.node-input-scene-node-sublabel {
+    position:absolute;
+    right: 0px;
+    padding-right: 10px;
+    padding-left: 10px;
+}
+</style>
 
 <script type="text/x-red" data-template-name="tradfri">
-    <div class="form-row">
-        <label for="node-input-connection"><i class="fa fa-cog"></i> Connection</label>
-        <input type="text" id="node-input-connection" placeholder="Connection">
+  <div class="form-row">
+    <label for="node-input-connection"><i class="fa fa-cog"></i> Connection</label>
+    <input type="text" id="node-input-connection" placeholder="Connection">
+  </div>
+  <div class="form-row">
+    <label for="node-input-groupId"><i class="fa fa-lightbulb-o"></i> Group</label>
+    <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+      <div style="position: absolute; left: 0px; right: 40px;">
+        <select id="node-input-groupId" style="width: 100%">
+          <option value="">None</option>
+        </select>
+      </div>
+      <a id="tradfri-groupId-refresh" class="editor-button" style="position: absolute; right: 0px; top: 0px;"><i id="tradfri-groupId-refresh-spinner" class="fa fa-refresh"></i></a>
     </div>
-    <div class="form-row">
-        <label for="node-input-deviceId"><i class="fa fa-lightbulb-o"></i> Device</label>
-        <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
-            <div style="position: absolute; left: 0px; right: 40px;">
-                <select id="node-input-deviceId" style="width: 100%">
-                    <option value="-1" selected="selected">None</option>
-
-                </select>
-            </div>
-            <a id="node-input-lookup-connection" class="editor-button" style="position: absolute; right: 0px; top: 0px;"><i id="tradfri-deviceId-refresh-spinner" class="fa fa-refresh"></i></a>
-        </div>
+  </div>
+  <div class="form-row">
+    <label for="node-input-deviceId"><i class="fa fa-lightbulb-o"></i> Device</label>
+    <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+      <div style="position: absolute; left: 0px; right: 40px;">
+        <select id="node-input-deviceId" style="width: 100%">
+          <option value="">All devices</option>
+        </select>
+      </div>
     </div>
-    <div class="form-row">
-        <label>&nbsp;</label>
-        <input type="checkbox" id="node-input-observe" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-observe" style="width: 70%;" >Observe device?</label>
+  </div>
+  <div class="form-row">
+    <label>&nbsp;</label>
+    <input type="checkbox" id="node-input-observe" style="display: inline-block; width: auto; vertical-align: top;">
+    <label for="node-input-observe" style="width: 70%;">Observe device?</label>
+  </div>
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+  <span style="font-weight: bold;">Scenes from selected group:</span>
+  <div class="form-row" id="node-input-scenes-row">
+    <div class="node-input-scenes-container-div">
+      <ul id="node-input-scenes-container">
+      </ul>
     </div>
-    <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
-    </div>
+  </div>
 </script>
 
 <script type="text/x-red" data-help-name="tradfri">
-    <p>Interface for IKEA Tradfri devices</p>
-    <h3>Inputs</h3>
-    <dl class="message-properties">
-        <dt> payload <span class="property-type"> string  | object</span> </dt>
-        <dd> The payload can either be a single command to the node (such as a status update request) sent as a string or an object with one or more commands targeting the light.</dd>
-    </dl>
-    <h3>Outputs</h3>
-    <dl class="message-properties">
-        <dt> payload <span class="property-type"> object </span></dt>
-        <dd> The status of the light. </dd>
-    </dl>
+  <p>Interface for IKEA Tradfri devices</p>
+  <h3>Inputs</h3>
+  <dl class="message-properties">
+    <dt> payload <span class="property-type"> string  | object</span> </dt>
+    <dd> The payload can either be a single command to the node (such as a status update request) sent as a string or an object with one or more commands targeting a light or group.</dd>
+  </dl>
+  <h3>Outputs</h3>
+  <dl class="message-properties">
+    <dt> payload <span class="property-type"> object </span></dt>
+    <dd> The status of a light or group. </dd>
+  </dl>
 
-    <h3>Details</h3>
-    The tradfri node acts as both input and output for a IKEA Tradfri lighbulb.
+  <h3>Details</h3> The tradfri node acts as both input and output for a IKEA Tradfri lighbulb(s).
 
-    <h2>Controlling the node</h2>
-    Nodes can be programmatically controlled by sending a message with <code>msg.payload</code> set to one of the following strings:
+  <h2>Scenes</h2> When a group is selected, all scenes for that group and their <code>instanceId</code> will be showen for refrence.
+
+  <h2>Controlling the node</h2> Nodes can be programmatically controlled by sending a message with <code>msg.payload</code> set to one of the following strings:
+  <ul>
+    <li><code>"status"</code> The node will output the current status of its target light or group.
+  </ul>
+
+  <h2>Controlling a light</h2> Lights can be controlled by sending an objet with one or more of the following properties as <code>msg.payload</code> to the node.
+  <ul>
+    <li><code>dimmer</code><code>number</code> The brightness in percent [0..100%].</li>
+    <li><code>onOff</code><code>boolean</code> If the lightbulb is on <code>true</code> or off <code>false</code></li>
+    <li><code>transitionTime</code><code>number</code> The duration of state changes in seconds. Default 0.5s, not supported for on/off.</li>
+    <li><code>colorTemperature</code><code>number</code> The color temperature in percent, where 0% equals cold white and 100% equals warm white.</li>
+    <li><code>color</code><code>string</code> The 6 digit hex number representing the lightbulb's color. Don't use any prefixes like "#", only the hex number itself!</li>
+    <li><code>hue</code><code>number</code> The colors hue [0..360°].</li>
+    <li><code>saturation</code><code>number</code> The colors saturation [0..100%].</li>
+  </ul>
+
+  <h2>Controlling a group</h2> A group can be controlled by selecting [All device] and sending an objet with one or more of the following properties as <code>msg.payload</code> to the node.
+  <ul>
+    <li><code>dimmer</code><code>number</code> The brightness in percent [0..100%].</li>
+    <li><code>onOff</code><code>boolean</code> If the lightbulb is on <code>true</code> or off <code>false</code></li>
+    <li><code>transitionTime</code><code>number</code> The duration of state changes in seconds. Default 0.5s, not supported for on/off.</li>
+    <li><code>sceneId</code><code>number</code> Set this to the <code>instanceId</code> of a scene (or "mood" as IKEA calls them), to activate it.</li>
+  </ul>
+
+  <h2>Observing a ligt</h2> If the node is set to observe it will send a message with the lights current properties as payload every time the light is updated:
+  <ul>
+    <li><code>name</code><code>string</code> The name of this accessory as displayed in the app. Defaults to the model name.</li>
+    <li><code>createdAt</code><code>number</code> The unix timestamp of the creation of the device. Unknown what this is exactly.</li>
+    <li><code>instanceId</code><code>number</code> The ID under which the accessory is known to the gateway. Is used in callbacks throughout the library.</li>
+    <li><code>deviceInfo</code><code>DeviceInfo{}</code> Some additional information about the device in form of a <code>DeviceInfo</code> object (see below)</li>
+    <li><code>alive</code><code>boolean</code> Whether the gateway considers this device as alive.</li>
+    <li><code>lastSeen</code><code>number</code> The unix timestamp of the last communication with the gateway.</li>
+    <li><code>lightList</code><code>Light[]</code> An array of all lights belonging to this accessory in form of a <code>Light[]</code> array (see below).</li>
+    <li><code>otaUpdateState</code><code>number</code> Unknown. Might be a boolean</li>
+  </ul>
+
+  <h2><code>DeviceInfo</code> object</h2>
+  <ul>
+    <li><code>battery</code><code>number</code> The battery percentage of a device. Only present if the device is battery-powered.</li>
+    <li><code>firmwareVersion</code><code>string</code> The firmware version of the device</li>
+    <li><code>manufacturer</code><code>string</code> The device manufacturer. Usually `"IKEA of Sweden"`.</li>
+    <li><code>modelNumber</code><code>string</code> The name/type of the device, e.g. `"TRADFRI bulb E27 CWS opal 600lm"`</li>
+    <li><code>power</code><code>PowerSources</code> How the device is powered. One of the following enum values:</li>
     <ul>
-        <li><code>"status"</code> The node will output the current status of its target light.
+      <li><code>Unknown (0)</code></li>
+      <li><code>InternalBattery (1)</code></li>
+      <li><code>ExternalBattery (2)</code></li>
+      <li><code>Battery (3)</code></li> - Although not in the specs, this is apparently used by the remote
+      <li><code>PowerOverEthernet (4)</code></li>
+      <li><code>USB (5)</code></li>
+      <li><code>AC_Power (6)</code></li>
+      <li><code>Solar (7)</code></li>
     </ul>
+    <li><code>serialNumber</code><code>string</code> Not used currently. Always <code>""</code></li>
+  </ul>
 
-    <h2>Controlling the lights</h2>
-    Lights can be controlled by sending an objet with one or more of the following properties as <code>msg.payload</code> to the node.
-        <ul>
-        <!-- <li><code>id</code><code>number</code> The id of the light <li>
-        <li><code>name</code><code>string</code> The given name of the light <li>  -->
-        <li><code>on</code><code>boolean</code><li> Turn the light on or off.</li>
-        <li><code>brightness</code><code>number</code> The brightness of the light [0,100]</li>
-        <li><code>colorTemperature</code><code>number</code> The color temperature of the light [0,100]</li>
-        <li><code>color</code><code>string</code> Sets the color of the light. For WS-bulbs, <code>F5FAF6</code>, <code>F1E0B5</code> and <code>EFD275</code> will set the light to the default cold, normal and warm temperatures respectively.</li>
-        <li><code>transition</code><code>number</code> The default transition time for operations. Will only work for single operation commands and not for on/off. Defaults to 0. </li>
-        <li><code>hue</code><code>number</code> Sets the hue of the light. Only for CWS. [0,365] (UNTESTED)</li>
-        <li><code>saturation</code><code>number</code> Sets the saturation of the light. Only for CWS. [0,100] (UNTESTED)</li>
-    </ul>
-
-    <h2>Observing</h2>
-        If the node is set to observe it will send a message with the lights current properties as payload every time the light is updated:
-    <ul>
-        <li><code>id</code><code>number</code> The id of the light </li>
-        <li><code>name</code><code>string</code> The given name of the light </li>
-        <li><code>model</code><code>string</code> The model of the light </li>
-        <li><code>firmware</code><code>string</code> The firmware of the light </li>
-        <li><code>alive</code><code>boolean</code> True if the gateway can communicate with the light, false if not </li>
-        <li><code>on</code><code>boolean</code> True if the light is on, false if not.</li>
-        <li><code>brightness</code><code>number</code><code>[0,100]</code> The brightness of the light</li>
-        <li><code>colorTemperature</code><code>number</code>[0,100] The color temperature of the light</li>
-        <li><code>color</code><code>string</code> The hex-code for the color of the light. Only fully supported by CWS bulbs.</li>
-        <li><code>colorX</code><code>number</code> The x component of the xy-color</li>
-        <li><code>colorY</code><code>number</code> The y component of the xy-color</li>
-        <li><code>transition</code><code>number</code> The default transition time for operations. However, since the default value of 0.5 makes it impossible to send temperature and brightness updates in the same command, this is overridden and set to 0 by default.</li>
-        <li><code>created</code><code>number</code> Probably when the light was paired with the gateway for the first time, measured in epoch time.</li>
-        <li><code>seen</code><code>number</code> When the light was last interacted with by the gateway (or similar), measured in epoch time.</li>
-        <li><code>type</code><code>number</code> The type of device where 2 is light</li>
-        <li><code>power</code><code>number</code> The type of power source powering the light. Will most likely always be 1.</li>
-    </ul>
-
+  <h2><code>Lights</code> array</h2>
+  <ul>
+    <li><code>dimmer</code><code>number</code> The brightness in percent [0..100%].</li>
+    <li><code>onOff</code><code>boolean</code> If the lightbulb is on <code>true</code> or off <code>false</code></li>
+    <li><code>transitionTime</code><code>number</code> The duration of state changes in seconds. Default 0.5s, not supported for on/off.</li>
+    <li><code>isSwitchable</code><code>boolean</code> Whether the lightbulb supports on/off.</li>
+    <li><code>isDimmable</code><code>boolean</code> Whether the lightbulb supports setting the brightness.</li>
+    <li><code>spectrum</code><code>"none" | "white" | "rgb"</code> The supported color spectrum of the lightbulb.</li>
+    <li><code>colorTemperature</code><code>number</code> The color temperature in percent, where 0% equals cold white and 100% equals warm white.</li>
+    <li><code>color</code><code>string</code> The 6 digit hex number representing the lightbulb's color. Don't use any prefixes like "#", only the hex number itself!</li>
+    <li><code>hue</code><code>number</code> The colors hue [0..360°].</li>
+    <li><code>saturation</code><code>number</code> The colors saturation [0..100%].</li>
+  </ul>
 </script>
