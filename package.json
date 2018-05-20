@@ -14,10 +14,7 @@
         "ikea",
         "tradfri"
     ],
-    "author": {
-        "name": "Jonathan Vermeulen",
-        "email": ""
-    },
+    "author": "Jonathan Vermeulen",
     "license": "GPL-3.0",
     "devDependencies": {
         "@types/node": "^8.5.5",
