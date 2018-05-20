@@ -12,6 +12,11 @@ Only one node (besides the config node) are necessary for operation. After the c
 
 ## Changelog
 
+### 0.1.3
+* Added group support and scenes
+* A lot of re-writing and re-structuring
+Please read the info in node-red carefully as the payload format changed.
+
 ### 0.1.2
 * Moved output status object from `msg.payload.light` to `msg.payload`.
 * Updated security code, identity and PSK to be saved as credentials in config.
