@@ -1,3 +1,7 @@
+# NOTICE: CURRENTLY UNMAINTAINED
+
+After returning two hubs to IKEA I removed all of their devices from my home (except for a stray E14 bulb for which couldn't find a replacement). Compared to similar devices on the market, I found Trådfri too unstable and unreliable. That was over a year ago, so things might have changed since then (or maybe I was just unlucky to begin with). I was planning on buying another hub just to address the issues but unfortunately haven't found time to do it. If anyone is interested, help would be welcome!
+
 # node-red-contrib-node-tradfri
 
 Node-RED node to interface with IKEA Tradfri lights without any external binaries thanks to [node-tradfri](https://github.com/AlCalzone/node-tradfri-client).
