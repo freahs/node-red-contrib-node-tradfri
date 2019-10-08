@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -50,8 +51,6 @@ module.exports = function (RED) {
         RED.nodes.createNode(node, config);
         node.name = config.name;
         node.address = config.address;
-        node.credentials.identity = "tradfri_1526131982225";
-        node.credentials.psk = "GTcy1xDnUR4wkwAJ";
         if ((typeof node.credentials.identity === 'undefined' && typeof node.credentials.psk !== 'undefined') || (typeof node.credentials.identity !== 'undefined' && typeof node.credentials.psk === 'undefined')) {
             RED.log.error("Must provide both identity and PSK or leave both blank to generate new credentials from security code.");
         }
@@ -205,7 +204,10 @@ module.exports = function (RED) {
         };
         node.on('close', () => {
             clearInterval(_ping);
-            _client.destroy();
+            if (_client != null) {
+                _client.destroy();
+                _client = null;
+            }
             RED.log.debug(`[Tradfri: ${node.id}] Config was closed`);
         });
     }

@@ -19,13 +19,13 @@
     "devDependencies": {
         "@types/node": "^8.5.5",
         "del": "^3.0.0",
-        "gulp": "^3.9.1",
+        "gulp": "^4.0.1",
         "gulp-shell": "^0.6.5",
         "gulp-typescript": "^3.2.3",
-        "typescript": "^2.6.2"
+        "typescript": "^3.6.3"
     },
     "dependencies": {
-        "node-tradfri-client": "^1.2.1"
+        "node-tradfri-client": "^2.0.1"
     },
     "node-red": {
         "nodes": {
