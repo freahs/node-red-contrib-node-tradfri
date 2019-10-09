@@ -210,7 +210,10 @@ module.exports = function(RED) {
 
     node.on('close', () => {
       clearInterval(_ping);
-      _client.destroy();
+      if (_client != null) {
+        _client.destroy();
+        _client = null;
+      }
       RED.log.debug(`[Tradfri: ${node.id}] Config was closed`);
     });
 

@@ -4,7 +4,7 @@
     category: 'config',
     defaults: {
       address: {
-        value: "192.168.50.81",
+        value: "",
         required: true
       },
       name: {
@@ -319,27 +319,27 @@
     <dd> The status of a light or group. </dd>
   </dl>
 
-  <h3>Details</h3> The tradfri node acts as both input and output for a IKEA Tradfri lighbulb(s).
+  <h3>Details</h3> The tradfri node acts as both input and output for IKEA Tradfri lighbulbs.
 
-  <h2>Scenes</h2> When a group is selected, all scenes for that group and their <code>instanceId</code> will be showen for refrence.
+  <h2>Scenes</h2> When a group is selected, all scenes for that group and their <code>instanceId</code> will be showed for refrence.
 
   <h2>Controlling the node</h2> Nodes can be programmatically controlled by sending a message with <code>msg.payload</code> set to one of the following strings:
   <ul>
     <li><code>"status"</code> The node will output the current status of its target light or group.
   </ul>
 
-  <h2>Controlling a light</h2> Lights can be controlled by sending an objet with one or more of the following properties as <code>msg.payload</code> to the node.
+  <h2>Controlling a light</h2> Lights can be controlled by sending an object with one or more of the following properties as <code>msg.payload</code> to the node.
   <ul>
     <li><code>dimmer</code><code>number</code> The brightness in percent [0..100%].</li>
     <li><code>onOff</code><code>boolean</code> If the lightbulb is on <code>true</code> or off <code>false</code></li>
     <li><code>transitionTime</code><code>number</code> The duration of state changes in seconds. Default 0.5s, not supported for on/off.</li>
     <li><code>colorTemperature</code><code>number</code> The color temperature in percent, where 0% equals cold white and 100% equals warm white.</li>
     <li><code>color</code><code>string</code> The 6 digit hex number representing the lightbulb's color. Don't use any prefixes like "#", only the hex number itself!</li>
-    <li><code>hue</code><code>number</code> The colors hue [0..360°].</li>
-    <li><code>saturation</code><code>number</code> The colors saturation [0..100%].</li>
+    <li><code>hue</code><code>number</code> The color's hue [0..360°].</li>
+    <li><code>saturation</code><code>number</code> The color's saturation [0..100%].</li>
   </ul>
 
-  <h2>Controlling a group</h2> A group can be controlled by selecting [All device] and sending an objet with one or more of the following properties as <code>msg.payload</code> to the node.
+  <h2>Controlling a group</h2> A group can be controlled by selecting [All devices] and sending an object with one or more of the following properties as <code>msg.payload</code> to the node.
   <ul>
     <li><code>dimmer</code><code>number</code> The brightness in percent [0..100%].</li>
     <li><code>onOff</code><code>boolean</code> If the lightbulb is on <code>true</code> or off <code>false</code></li>
@@ -347,16 +347,16 @@
     <li><code>sceneId</code><code>number</code> Set this to the <code>instanceId</code> of a scene (or "mood" as IKEA calls them), to activate it.</li>
   </ul>
 
-  <h2>Observing a ligt</h2> If the node is set to observe it will send a message with the lights current properties as payload every time the light is updated:
+  <h2>Observing a light</h2> If the node is set to observe it will send a message with the light's current properties as payload every time the light is updated:
   <ul>
-  <li><code>name</code><code>string</code> The name of this accessory as displayed in the app. Defaults to the model name.</li>
-  <li><code>createdAt</code><code>number</code> The unix timestamp of the creation of the device. Unknown what this is exactly.</li>
-  <li><code>instanceId</code><code>number</code> The ID under which the accessory is known to the gateway. Is used in callbacks throughout the library.</li>
-  <li><code>deviceInfo</code><code>DeviceInfo{}</code> Some additional information about the device in form of a <code>DeviceInfo</code> object (see below)</li>
-  <li><code>alive</code><code>boolean</code> Whether the gateway considers this device as alive.</li>
-  <li><code>lastSeen</code><code>number</code> The unix timestamp of the last communication with the gateway.</li>
-  <li><code>lightList</code><code>Light[]</code> An array of all lights belonging to this accessory in form of a <code>Light[]</code> array (see below).</li>
-  <li><code>otaUpdateState</code><code>number</code> Unknown. Might be a boolean</li>
+    <li><code>name</code><code>string</code> The name of this accessory as displayed in the app. Defaults to the model name.</li>
+    <li><code>createdAt</code><code>number</code> The unix timestamp of the creation of the device. Unknown what this is exactly.</li>
+    <li><code>instanceId</code><code>number</code> The ID under which the accessory is known to the gateway. Is used in callbacks throughout the library.</li>
+    <li><code>deviceInfo</code><code>DeviceInfo{}</code> Some additional information about the device in form of a <code>DeviceInfo</code> object (see below)</li>
+    <li><code>alive</code><code>boolean</code> Whether the gateway considers this device as alive.</li>
+    <li><code>lastSeen</code><code>number</code> The unix timestamp of the last communication with the gateway.</li>
+    <li><code>lightList</code><code>Light[]</code> An array of all lights belonging to this accessory in form of a <code>Light[]</code> array (see below).</li>
+    <li><code>otaUpdateState</code><code>number</code> Unknown. Might be a boolean</li>
   </ul>
 
   <h2><code>DeviceInfo</code> object</h2>
@@ -389,7 +389,7 @@
     <li><code>spectrum</code><code>"none" | "white" | "rgb"</code> The supported color spectrum of the lightbulb.</li>
     <li><code>colorTemperature</code><code>number</code> The color temperature in percent, where 0% equals cold white and 100% equals warm white.</li>
     <li><code>color</code><code>string</code> The 6 digit hex number representing the lightbulb's color. Don't use any prefixes like "#", only the hex number itself!</li>
-    <li><code>hue</code><code>number</code> The colors hue [0..360°].</li>
-    <li><code>saturation</code><code>number</code> The colors saturation [0..100%].</li>
+    <li><code>hue</code><code>number</code> The color's hue [0..360°].</li>
+    <li><code>saturation</code><code>number</code> The color's saturation [0..100%].</li>
   </ul>
 </script>
