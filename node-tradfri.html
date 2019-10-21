@@ -1,0 +1,1153 @@
+<!-- Config Node -->
+<script type="text/javascript">
+    RED.nodes.registerType('tradfri-connection',{
+        category: 'config',
+        defaults: {
+            address:      { value:"", required:true },
+            name:         { value:"" }
+        },
+        credentials: {
+            securityCode: { type:"text" },
+            identity:     { type:"text" },
+            psk:          { type:"text" }
+        },
+        label: function() {
+            return this.name || "tradfri@" + this.address;
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="tradfri-connection">
+    <div class="form-row">
+        <label for="node-config-input-address"><i class="fa fa-globe"></i> Address</label>
+        <input type="text" id="node-config-input-address">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-securityCode"><i class="fa fa-gears"></i> Security Code</label>
+        <input type="text" id="node-config-input-securityCode">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-identity"><i class="fa fa-address-card-o"></i> Identity</label>
+        <input type="text" id="node-config-input-identity">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-psk"><i class="fa fa-lock"></i> Pre-shared key</label>
+        <input type="text" id="node-config-input-psk">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="tradfri-connection">
+    <ul>
+        <li><i class="fa fa-globe"></i> <b>Address:</b> The address to your gateway.</li>
+        <li><i class="fa fa-gears"></i> <b>Security code:</b> The security code on the backside of your gateway. You only need to enter this if you <em>don't</em> have an identiy and PSK. In that case identity and PSK will be generated for you using the security key.</li>
+        <li><i class="fa fa-address-card-o"></i> <b>Address:</b> The identiy used to access the gateway. Used together with a PSK.</li>
+        <li><i class="fa fa-lock"></i> <b>Pre-shared key:</b> The passkey used to access the gateway. Used together with an identity.</li>
+    </ul>
+</script>
+
+<!--- Blind Node -->
+<script type="text/javascript">
+    var updateBlinds = (currentDeviceId) => {
+        let configNodeId = $('#node-input-connection').find(":selected").val();
+        if (configNodeId == null || configNodeId === '_ADD_') { return; }
+        $.get('tradfri/blinds', {nodeId: configNodeId}, function(resp){
+            let blinds = JSON.parse(resp);
+            if (!Array.isArray(blinds) || blinds.length <= 0) { return; }
+            $('#node-input-deviceId').find('option').not(':first').remove();
+            $.each(blinds, function(i, blind) {
+                let opt = {};
+                opt.value = blind.id;
+                opt.text = blind.name;
+                if (blind.id === currentDeviceId) {
+                    opt.selected = "selected";
+                }
+                $('#node-input-deviceId').append($('<option>', opt));
+            });
+        });
+    };
+
+    RED.nodes.registerType('tradfri-blind',{
+        category: 'function',
+        color: '#9FE597',
+        defaults: {
+            name:            {value: ""},
+            deviceId:        {value: "", required: true, validate: RED.validators.number()},
+            deviceName:     {value: ""},
+            deviceType:        {value: "tradfri-blind"},
+            connection:        {value: "", type: "tradfri-connection"},
+            observe:        {value: true, required: true}
+        },
+        align: 'left',
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-window-maximize',
+        label: function() {
+            return this.deviceName || "tradfri-blind";
+        },
+        oneditprepare: function() {
+            var node = this;
+            $('#node-input-connection').change(function(){
+                updateBlinds(node.deviceId);
+            });
+            $('#tradfri-deviceId-refresh').click(function(){
+                updateBlinds(node.deviceId);
+            });
+            $(document).ready(function() {
+                $('#node-input-msgPassthrough').prop('checked', node.observe);
+            });
+        },
+        oneditsave: function() {
+            this.deviceName = $('#node-input-deviceId').find(":selected").text();
+        }
+    });
+
+</script>
+
+<script type="text/x-red" data-template-name="tradfri-blind">
+    <div class="form-row">
+        <label for="node-input-connection"><i class="fa fa-cog"></i> Connection</label>
+        <input type="text" id="node-input-connection" placeholder="Connection">
+    </div>
+    <div class="form-row">
+        <label for="node-input-deviceId"><i class="fa fa-window-maximize"></i> Blind</label>
+        <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+            <div style="position: absolute; left: 0px; right: 40px;">
+                <select id="node-input-deviceId" style="width: 100%">
+                    <option value="-1" selected="selected">None</option>
+
+                </select>
+            </div>
+            <a id="node-input-lookup-connection" class="editor-button" style="position: absolute; right: 0px; top: 0px;"><i id="tradfri-deviceId-refresh-spinner" class="fa fa-refresh"></i></a>
+        </div>
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-observe" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-observe" style="width: 70%;" >Observe device?</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="tradfri-blind">
+    <p>Interface for IKEA Tradfri devices</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">string  | object</span></dt>
+        <dd>The payload can either be a single command to the node (such as a status update request) sent as a string or an object with one or more commands targeting the blind.</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">object</span></dt>
+        <dd>The status of the blind.</dd>
+        <dt>topic<span class="property-type">string</span></dt>
+    </dl>
+
+    <h3>Details</h3>
+    The tradfri-blind node acts as both input and output for a IKEA Tradfri blind.
+
+    <h2>Controlling the node</h2>
+    Nodes can be programmatically controlled by sending a message with <code>msg.payload</code> set to one of the following strings:
+
+    <ul>
+        <li><code>"status"</code> The node will output the current status of its target blind.
+    </ul>
+
+    <h2>Controlling the blinds</h2>
+    A blind has several properties describing its state.
+    And one property which can control the blind position by sending an object with the following property as <code>msg.payload</code> to the node.
+
+    <ul>
+        <li><code>"position"</code>: number - The position in percent [0..100%].</li>
+    </ul>
+
+    <div><pre><code class="language-json">{
+  "position": number
+}</code></pre></div>
+
+    <h2>Observing</h2>
+    If the node is set to observe it will send a message with the blinds current properties as <code>msg.payload</code> every time the blind is updated:
+
+    <ul>
+        <li><code>"name"</code>: string - The name of this accessory.</li>
+        <li><code>"createdAt"</code>: number - The unix timestamp of the creation of the device.</li>
+        <li><code>"instanceId"</code>: number - The ID under which the accessory is known to the gateway.</li>
+        <li><code>"type"</code>: number - The type of the accessory.</li>
+        <ul>
+            <li>remote (0) - A "normal" remote</li>
+            <li>slaveRemote (1) - A remote which has been paired with another remote. You can find details here on how to achieve this configuration.</li>
+            <li>lightbulb (2) - A lightbulb</li>
+            <li>plug (3) - A smart plug</li>
+            <li>motionSensor (4) - A motion sensor</li>
+            <li>signalRepeater (6) - A signal repeater</li>
+            <li>blind (7) - A blind</li>
+        </ul>
+        <li><code>"alive"</code>: boolean - Whether the gateway considers this device as alive.</li>
+        <li><code>"lastSeen"</code>: number - The unix timestamp of the last communication with the gateway.</li>
+        <li><code>"otaUpdateState"</code>: number - Unknown. Might be a boolean</li>
+        <li><code>"deviceInfo"</code>: object - Some additional information about the device.</li>
+        <ul>
+            <li><code>"firmwareVersion"</code>: string - The firmware version of the device.</li>
+            <li><code>"manufacturer"</code>: string - The device manufacturer.</li>
+            <li><code>"modelNumber"</code>: string - The name/type of the device.</li>
+            <li><code>"power"</code>: number - How the device is powered.</li>
+            <ul>
+                <li>Unknown (0)</li>
+                <li>InternalBattery (1)</li>
+                <li>ExternalBattery (2)</li>
+                <li>Battery (3) - Although not in the specs, this is apparently used by the remote</li>
+                <li>PowerOverEthernet (4)</li>
+                <li>USB (5)</li>
+                <li>AC_Power (6)</li>
+                <li>Solar (7)</li>
+            </ul>
+            <li><code>"serialNumber"</code>: string - Not used currently. Always ""</li>
+            <li><code>"battery"</code>: number - The battery percentage of a device. Only present if the device is battery-powered.</li>
+        </ul>
+        <li><code>"blindList"</code>: array - An array of all blinds belonging to this accessory.</li>
+        <ul>
+            <li><code>"position"</code>: number - The position in percent [0..100%].</li>
+        </ul>
+    </ul>
+
+</script>
+
+<!--- Light Node -->
+<script type="text/javascript">
+    var updateLights = (currentDeviceId) => {
+        //RED.log.debug(`Light update ${currentDeviceId} currentDeviceId`);
+        let configNodeId = $('#node-input-connection').find(":selected").val();
+        //RED.log.debug(`${configNodeId} configNodeId`);
+        if (configNodeId == null || configNodeId === '_ADD_') { return; }
+        $.get('tradfri/lights', {nodeId: configNodeId}, function(resp){
+            //RED.log.debug(`${resp} resp`);
+            let lights = JSON.parse(resp);
+            if (!Array.isArray(lights) || lights.length <= 0) { return; }
+            $('#node-input-deviceId').find('option').not(':first').remove();
+            $.each(lights, function(i, light) {
+                let opt = {};
+                opt.value = light.id;
+                opt.text = light.name;
+                if (light.id === currentDeviceId) {
+                    opt.selected = "selected";
+                }
+                $('#node-input-deviceId').append($('<option>', opt));
+            });
+        });
+    };
+
+    RED.nodes.registerType('tradfri-light',{
+        category: 'function',
+        color: '#9FE597',
+        defaults: {
+            name:            {value: ""},
+            deviceId:        {value: "", required: true, validate: RED.validators.number()},
+            deviceName:     {value: ""},
+            deviceType:        {value: "tradfri-light"},
+            connection:        {value: "", type: "tradfri-connection"},
+            observe:        {value: true, required: true}
+        },
+        align: 'left',
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-lightbulb-o',
+        label: function() {
+            return this.deviceName || "tradfri-light";
+        },
+        oneditprepare: function() {
+            var node = this;
+            $('#node-input-connection').change(function(){
+                updateLights(node.deviceId);
+            });
+            $('#tradfri-deviceId-refresh').click(function(){
+                updateLights(node.deviceId);
+            });
+            $(document).ready(function() {
+                $('#node-input-msgPassthrough').prop('checked', node.observe);
+            });
+        },
+        oneditsave: function() {
+            this.deviceName = $('#node-input-deviceId').find(":selected").text();
+        }
+    });
+
+</script>
+
+<script type="text/x-red" data-template-name="tradfri-light">
+    <div class="form-row">
+        <label for="node-input-connection"><i class="fa fa-cog"></i> Connection</label>
+        <input type="text" id="node-input-connection" placeholder="Connection">
+    </div>
+    <div class="form-row">
+        <label for="node-input-deviceId"><i class="fa fa-lightbulb-o"></i> Light</label>
+        <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+            <div style="position: absolute; left: 0px; right: 40px;">
+                <select id="node-input-deviceId" style="width: 100%">
+                    <option value="-1" selected="selected">None</option>
+
+                </select>
+            </div>
+            <a id="node-input-lookup-connection" class="editor-button" style="position: absolute; right: 0px; top: 0px;"><i id="tradfri-deviceId-refresh-spinner" class="fa fa-refresh"></i></a>
+        </div>
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-observe" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-observe" style="width: 70%;" >Observe device?</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="tradfri-light">
+    <p>Interface for IKEA Tradfri devices</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">string  | object</span></dt>
+        <dd>The payload can either be a single command to the node (such as a status update request) sent as a string or an object with one or more commands targeting the light.</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">object</span></dt>
+        <dd>The status of the light.</dd>
+        <dt>topic<span class="property-type">string</span></dt>
+    </dl>
+
+    <h3>Details</h3>
+    The tradfri-light node acts as both input and output for a IKEA Tradfri lightbulb.
+
+    <h2>Controlling the node</h2>
+    Nodes can be programmatically controlled by sending a message with <code>msg.payload</code> set to one of the following strings:
+
+    <ul>
+        <li><code>"status"</code> The node will output the current status of its target light.</li>
+    </ul>
+
+    <h2>Controlling the lights</h2>
+    A light represents a single lightbulb and has several properties describing its state. The supported properties depend on the spectrum of the lightbulb.
+    <strong>All</strong> of them support the most basic properties, which can be controlled by sending an object with one or more of the following properties as <code>msg.payload</code> to the node.
+
+    <ul>
+        <li><code>"dimmer"</code>: number - The brightness in percent [0..100%].</li>
+
+        <li><code>"onOff"</code>: boolean - If the lightbulb is on (true) or off (false)</li>
+
+        <li><code>"transitionTime"</code>: number - The duration of state changes in seconds. Default 0.5s, not supported for on/off.</li>
+    </ul>
+
+    <strong>White spectrum</strong> lightbulbs also support
+
+    <ul>
+        <li><code>"colorTemperature"</code>: number - The color temperature in percent, where 0% equals cold white and 100% equals warm white.</li>
+    </ul>
+
+    <strong>RGB</strong> lightbulbs have the following properties:
+
+    <ul>
+        <li><code>"color"</code>: string - The 6 digit hex number representing the lightbulb's color. Don't use any prefixes like "#", only the hex number itself!</li>
+
+        <li><code>"hue"</code>: number - The color's hue [0..360°].</li>
+
+        <li><code>"saturation"</code>: number - The color's saturation [0..100%].</li>
+    </ul>
+
+    <div><pre><code class="language-json">{
+  "onOff": boolean,
+  "dimmer": number,
+  "transitionTime": number,
+  "colorTemperature": number,
+  "color": string,
+  "hue": number,
+  "saturation": number
+}</code></pre></div>
+
+    <h2>Observing</h2>
+    If the node is set to observe it will send a message with the lights current properties as <code>msg.payload</code> every time the light is updated:
+
+    <ul>
+        <li><code>"name"</code>: string - The name of this accessory.</li>
+        <li><code>"createdAt"</code>: number - The unix timestamp of the creation of the device.</li>
+        <li><code>"instanceId"</code>: number - The ID under which the accessory is known to the gateway.</li>
+        <li><code>"type"</code>: number - The type of the accessory.</li>
+        <ul>
+            <li>remote (0) - A "normal" remote</li>
+            <li>slaveRemote (1) - A remote which has been paired with another remote. You can find details here on how to achieve this configuration.</li>
+            <li>lightbulb (2) - A lightbulb</li>
+            <li>plug (3) - A smart plug</li>
+            <li>motionSensor (4) - A motion sensor</li>
+            <li>signalRepeater (6) - A signal repeater</li>
+            <li>blind (7) - A blind</li>
+        </ul>
+        <li><code>"alive"</code>: boolean - Whether the gateway considers this device as alive.</li>
+        <li><code>"lastSeen"</code>: number - The unix timestamp of the last communication with the gateway.</li>
+        <li><code>"otaUpdateState"</code>: number - Unknown. Might be a boolean</li>
+        <li><code>"deviceInfo"</code>: object - Some additional information about the device.</li>
+        <ul>
+            <li><code>"firmwareVersion"</code>: string - The firmware version of the device.</li>
+            <li><code>"manufacturer"</code>: string - The device manufacturer.</li>
+            <li><code>"modelNumber"</code>: string - The name/type of the device.</li>
+            <li><code>"power"</code>: number - How the device is powered.</li>
+            <ul>
+                <li>Unknown (0)</li>
+                <li>InternalBattery (1)</li>
+                <li>ExternalBattery (2)</li>
+                <li>Battery (3) - Although not in the specs, this is apparently used by the remote</li>
+                <li>PowerOverEthernet (4)</li>
+                <li>USB (5)</li>
+                <li>AC_Power (6)</li>
+                <li>Solar (7)</li>
+            </ul>
+            <li><code>"serialNumber"</code>: string - Not used currently. Always ""</li>
+            <li><code>"battery"</code>: number - The battery percentage of a device. Only present if the device is battery-powered.</li>
+        </ul>
+        <li><code>"lightList"</code>: array - An array of all lights belonging to this accessory.</li>
+        <ul>
+            <li><code>"onOff"</code>: boolean - If the lightbulb is on (true) or off (false)</li>
+            <li><code>"dimmer"</code>: number - The brightness in percent [0..100%].</li>
+            <li><code>"transitionTime"</code>: number - The duration of state changes in seconds. Default 0.5s, not supported for on/off.</li>
+            <li><code>"colorTemperature"</code>: number - The color temperature in percent, where 0% equals cold white and 100% equals warm white.</li>
+            <li><code>"color"</code>: string - The 6 digit hex number representing the lightbulb's color.</li>
+            <li><code>"colorX"</code>: number - The x component of the xy-color</li>
+            <li><code>"colorY"</code>: number - The y component of the xy-color</li>
+            <li><code>"hue"</code>: number - The color's hue [0..360°].</li>
+            <li><code>"saturation"</code>: number - The color's saturation [0..100%].</li>
+        </ul>
+    </ul>
+
+</script>
+
+<!--- Plug Node -->
+<script type="text/javascript">
+    var updatePlugs = (currentDeviceId) => {
+        let configNodeId = $('#node-input-connection').find(":selected").val();
+        if (configNodeId == null || configNodeId === '_ADD_') { return; }
+        $.get('tradfri/plugs', {nodeId: configNodeId}, function(resp){
+            let plugs = JSON.parse(resp);
+            if (!Array.isArray(plugs) || plugs.length <= 0) { return; }
+            $('#node-input-deviceId').find('option').not(':first').remove();
+            $.each(plugs, function(i, plug) {
+                let opt = {};
+                opt.value = plug.id;
+                opt.text = plug.name;
+                if (plug.id === currentDeviceId) {
+                    opt.selected = "selected";
+                }
+                $('#node-input-deviceId').append($('<option>', opt));
+            });
+        });
+    };
+
+    RED.nodes.registerType('tradfri-plug',{
+        category: 'function',
+        color: '#9FE597',
+        defaults: {
+            name:            {value: ""},
+            deviceId:        {value: "", required: true, validate: RED.validators.number()},
+            deviceName:     {value: ""},
+            deviceType:        {value: "tradfri-plug"},
+            connection:        {value: "", type: "tradfri-connection"},
+            observe:        {value: true, required: true}
+        },
+        align: 'left',
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-plug',
+        label: function() {
+            return this.deviceName || "tradfri-plug";
+        },
+        oneditprepare: function() {
+            var node = this;
+            $('#node-input-connection').change(function(){
+                updatePlugs(node.deviceId);
+            });
+            $('#tradfri-deviceId-refresh').click(function(){
+                updatePlugs(node.deviceId);
+            });
+            $(document).ready(function() {
+                $('#node-input-msgPassthrough').prop('checked', node.observe);
+            });
+        },
+        oneditsave: function() {
+            this.deviceName = $('#node-input-deviceId').find(":selected").text();
+        }
+    });
+
+</script>
+
+<script type="text/x-red" data-template-name="tradfri-plug">
+    <div class="form-row">
+        <label for="node-input-connection"><i class="fa fa-cog"></i> Connection</label>
+        <input type="text" id="node-input-connection" placeholder="Connection">
+    </div>
+    <div class="form-row">
+        <label for="node-input-deviceId"><i class="fa fa-plug"></i> Plug</label>
+        <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+            <div style="position: absolute; left: 0px; right: 40px;">
+                <select id="node-input-deviceId" style="width: 100%">
+                    <option value="-1" selected="selected">None</option>
+
+                </select>
+            </div>
+            <a id="node-input-lookup-connection" class="editor-button" style="position: absolute; right: 0px; top: 0px;"><i id="tradfri-deviceId-refresh-spinner" class="fa fa-refresh"></i></a>
+        </div>
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-observe" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-observe" style="width: 70%;" >Observe device?</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="tradfri-plug">
+    <p>Interface for IKEA Tradfri devices</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">string  | object</span></dt>
+        <dd>The payload can either be a single command to the node (such as a status update request) sent as a string or an object with one or more commands targeting the plug.</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">object</span></dt>
+        <dd>The status of the plug.</dd>
+        <dt>topic<span class="property-type">string</span></dt>
+    </dl>
+
+    <h3>Details</h3>
+    The tradfri-plug node acts as both input and output for a IKEA Tradfri plug.
+
+    <h2>Controlling the node</h2>
+    Nodes can be programmatically controlled by sending a message with <code>msg.payload</code> set to one of the following strings:
+
+    <ul>
+        <li><code>"status"</code> The node will output the current status of its target plug.
+    </ul>
+
+    <h2>Controlling the plugs</h2>
+    A plug represents a single outlet plug and has several properties describing its state.
+    And one property which can control the plugs by sending an object with the following property as <code>msg.payload</code> to the node.
+
+    <ul><li><code>"onOff"</code>: boolean - If the plug is on (true) or off (false).</li>
+    </ul>
+
+    <div><pre><code class="language-json">{
+  "onOff": boolean
+}</code></pre></div>
+
+    <h2>Observing</h2>
+    If the node is set to observe it will send a message with the plugs current properties as <code>msg.payload</code> every time the plug is updated:
+
+    <ul>
+        <li><code>"name"</code>: string - The name of this accessory.</li>
+        <li><code>"createdAt"</code>: number - The unix timestamp of the creation of the device.</li>
+        <li><code>"instanceId"</code>: number - The ID under which the accessory is known to the gateway.</li>
+        <li><code>"type"</code>: number - The type of the accessory.</li>
+        <ul>
+            <li>remote (0) - A "normal" remote</li>
+            <li>slaveRemote (1) - A remote which has been paired with another remote. You can find details here on how to achieve this configuration.</li>
+            <li>lightbulb (2) - A lightbulb</li>
+            <li>plug (3) - A smart plug</li>
+            <li>motionSensor (4) - A motion sensor</li>
+            <li>signalRepeater (6) - A signal repeater</li>
+            <li>blind (7) - A blind</li>
+        </ul>
+        <li><code>"alive"</code>: boolean - Whether the gateway considers this device as alive.</li>
+        <li><code>"lastSeen"</code>: number - The unix timestamp of the last communication with the gateway.</li>
+        <li><code>"otaUpdateState"</code>: number - Unknown. Might be a boolean</li>
+        <li><code>"deviceInfo"</code>: object - Some additional information about the device.</li>
+        <ul>
+            <li><code>"firmwareVersion"</code>: string - The firmware version of the device.</li>
+            <li><code>"manufacturer"</code>: string - The device manufacturer.</li>
+            <li><code>"modelNumber"</code>: string - The name/type of the device.</li>
+            <li><code>"power"</code>: number - How the device is powered.</li>
+            <ul>
+                <li>Unknown (0)</li>
+                <li>InternalBattery (1)</li>
+                <li>ExternalBattery (2)</li>
+                <li>Battery (3) - Although not in the specs, this is apparently used by the remote</li>
+                <li>PowerOverEthernet (4)</li>
+                <li>USB (5)</li>
+                <li>AC_Power (6)</li>
+                <li>Solar (7)</li>
+            </ul>
+            <li><code>"serialNumber"</code>: string - Not used currently. Always ""</li>
+            <li><code>"battery"</code>: number - The battery percentage of a device. Only present if the device is battery-powered.</li>
+        </ul>
+        <li><code>"plugList"</code>: array - An array of all plugs belonging to this accessory.</li>
+        <ul>
+            <li><code>"onOff"</code>: boolean - If the plug is on (true) or off (false).</li>
+            <li><code>"isSwitchable"</code>: boolean - Whether the plug supports on/off (always true).</li>
+            <li><code>"isDimmable"</code>: boolean - Whether the plug supports setting the dimmer value (always false for now).</li>
+        </ul>
+    </ul>
+
+</script>
+
+<!--- Sensor Node -->
+<script type="text/javascript">
+    var updateSensors = (currentDeviceId) => {
+        let configNodeId = $('#node-input-connection').find(":selected").val();
+        if (configNodeId == null || configNodeId === '_ADD_') { return; }
+        $.get('tradfri/sensors', {nodeId: configNodeId}, function(resp){
+            let sensors = JSON.parse(resp);
+            if (!Array.isArray(sensors) || sensors.length <= 0) { return; }
+            $('#node-input-deviceId').find('option').not(':first').remove();
+            $.each(sensors, function(i, sensor) {
+                let opt = {};
+                opt.value = sensor.id;
+                opt.text = sensor.name;
+                if (sensor.id === currentDeviceId) {
+                    opt.selected = "selected";
+                }
+                $('#node-input-deviceId').append($('<option>', opt));
+            });
+        });
+    };
+
+    RED.nodes.registerType('tradfri-sensor',{
+        category: 'function',
+        color: '#9FE597',
+        defaults: {
+            name:            {value: ""},
+            deviceId:        {value: "", required: true, validate: RED.validators.number()},
+            deviceName:     {value: ""},
+            deviceType:        {value: "tradfri-sensor"},
+            connection:        {value: "", type: "tradfri-connection"},
+            observe:        {value: false, required: false}
+        },
+        align: 'left',
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-bullseye',
+        label: function() {
+            return this.deviceName || "tradfri-sensor";
+        },
+        oneditprepare: function() {
+            var node = this;
+            $('#node-input-connection').change(function(){
+                updateSensors(node.deviceId);
+            });
+            $('#tradfri-deviceId-refresh').click(function(){
+                updateSensors(node.deviceId);
+            });
+        },
+        oneditsave: function() {
+            this.deviceName = $('#node-input-deviceId').find(":selected").text();
+        }
+    });
+
+</script>
+
+<script type="text/x-red" data-template-name="tradfri-sensor">
+    <div class="form-row">
+        <label for="node-input-connection"><i class="fa fa-cog"></i> Connection</label>
+        <input type="text" id="node-input-connection" placeholder="Connection">
+    </div>
+    <div class="form-row">
+        <label for="node-input-deviceId"><i class="fa fa-bullseye"></i> Sensor</label>
+        <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+            <div style="position: absolute; left: 0px; right: 40px;">
+                <select id="node-input-deviceId" style="width: 100%">
+                    <option value="-1" selected="selected">None</option>
+
+                </select>
+            </div>
+            <a id="node-input-lookup-connection" class="editor-button" style="position: absolute; right: 0px; top: 0px;"><i id="tradfri-deviceId-refresh-spinner" class="fa fa-refresh"></i></a>
+        </div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="tradfri-sensor">
+    <p>Interface for IKEA Tradfri devices</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">string</span></dt>
+        <dd>The payload can only be a single command to request a status update.</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">object</span></dt>
+        <dd>The status of the sensor.</dd>
+        <dt>topic<span class="property-type">string</span></dt>
+    </dl>
+
+    <h3>Details</h3>
+    The tradfri-sensor node acts as both input and output for a IKEA Tradfri sensor.
+
+    <h2>Controlling the node</h2>
+    Nodes can be programmatically controlled by sending a message with <code>msg.payload</code> set to the following strings:
+
+    <ul>
+        <li><code>"status"</code> The node will output the current status of its target sensor.
+    </ul>
+
+    <h2>Status</h2>
+    If a status request is send to the node it will respond with a <code>msg.payload</code> containing the sensors current properties.
+
+    <ul>
+        <li><code>"name"</code>: string - The name of this accessory.</li>
+        <li><code>"createdAt"</code>: number - The unix timestamp of the creation of the device.</li>
+        <li><code>"instanceId"</code>: number - The ID under which the accessory is known to the gateway.</li>
+        <li><code>"type"</code>: number - The type of the accessory.</li>
+        <ul>
+            <li>remote (0) - A "normal" remote</li>
+            <li>slaveRemote (1) - A remote which has been paired with another remote. You can find details here on how to achieve this configuration.</li>
+            <li>lightbulb (2) - A lightbulb</li>
+            <li>plug (3) - A smart plug</li>
+            <li>motionSensor (4) - A motion sensor</li>
+            <li>signalRepeater (6) - A signal repeater</li>
+            <li>blind (7) - A blind</li>
+        </ul>
+        <li><code>"alive"</code>: boolean - Whether the gateway considers this device as alive.</li>
+        <li><code>"lastSeen"</code>: number - The unix timestamp of the last communication with the gateway.</li>
+        <li><code>"otaUpdateState"</code>: number - Unknown. Might be a boolean</li>
+        <li><code>"deviceInfo"</code>: object - Some additional information about the device.</li>
+        <ul>
+            <li><code>"firmwareVersion"</code>: string - The firmware version of the device.</li>
+            <li><code>"manufacturer"</code>: string - The device manufacturer.</li>
+            <li><code>"modelNumber"</code>: string - The name/type of the device.</li>
+            <li><code>"power"</code>: number - How the device is powered.</li>
+            <ul>
+                <li>Unknown (0)</li>
+                <li>InternalBattery (1)</li>
+                <li>ExternalBattery (2)</li>
+                <li>Battery (3) - Although not in the specs, this is apparently used by the remote</li>
+                <li>PowerOverEthernet (4)</li>
+                <li>USB (5)</li>
+                <li>AC_Power (6)</li>
+                <li>Solar (7)</li>
+            </ul>
+            <li><code>"serialNumber"</code>: string - Not used currently. Always ""</li>
+            <li><code>"battery"</code>: number - The battery percentage of a device. Only present if the device is battery-powered.</li>
+        </ul>
+        <li><code>"sensorList"</code>: array - An array of all sensors belonging to this accessory.</li>
+        <ul>
+            <li><code>"name"</code>: string - Currently not supported.</li>
+            <li><code>"createdAt"</code>: number - Currently not supported.</li>
+            <li><code>"instanceId"</code>: number - Currently not supported.</li>
+            <li><code>"appType"</code>: string - Currently not supported.</li>
+            <li><code>"sensorType"</code>: string - Currently not supported.</li>
+            <li><code>"minMeasuredValue"</code>: number - Currently not supported.</li>
+            <li><code>"maxMeasuredValue"</code>: number - Currently not supported.</li>
+            <li><code>"minRangeValue"</code>: number - Currently not supported.</li>
+            <li><code>"maxRangeValue"</code>: number - Currently not supported.</li>
+            <li><code>"resetMinMaxMeasureValue"</code>: boolean - Currently not supported.</li>
+            <li><code>"sensorValue"</code>: number - Currently not supported.</li>
+            <li><code>"unit"</code>: string - Currently not supported.</li>
+        </ul>
+    </ul>
+
+</script>
+
+<!--- Remote Node -->
+<script type="text/javascript">
+    var updateRemotes = (currentDeviceId) => {
+        let configNodeId = $('#node-input-connection').find(":selected").val();
+        if (configNodeId == null || configNodeId === '_ADD_') { return; }
+        $.get('tradfri/remotes', {nodeId: configNodeId}, function(resp){
+            let remotes = JSON.parse(resp);
+            if (!Array.isArray(remotes) || remotes.length <= 0) { return; }
+            $('#node-input-deviceId').find('option').not(':first').remove();
+            $.each(remotes, function(i, remote) {
+                let opt = {};
+                opt.value = remote.id;
+                opt.text = remote.name;
+                if (remote.id === currentDeviceId) {
+                    opt.selected = "selected";
+                }
+                $('#node-input-deviceId').append($('<option>', opt));
+            });
+        });
+    };
+
+    RED.nodes.registerType('tradfri-remote',{
+        category: 'function',
+        color: '#9FE597',
+        defaults: {
+            name:            {value: ""},
+            deviceId:        {value: "", required: true, validate: RED.validators.number()},
+            deviceName:     {value: ""},
+            deviceType:        {value: "tradfri-remote"},
+            connection:        {value: "", type: "tradfri-connection"},
+            observe:        {value: false, required: false}
+        },
+        align: 'left',
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-power-off',
+        label: function() {
+            return this.deviceName || "tradfri-remote";
+        },
+        oneditprepare: function() {
+            var node = this;
+            $('#node-input-connection').change(function(){
+                updateRemotes(node.deviceId);
+            });
+            $('#tradfri-deviceId-refresh').click(function(){
+                updateRemotes(node.deviceId);
+            });
+        },
+        oneditsave: function() {
+            this.deviceName = $('#node-input-deviceId').find(":selected").text();
+        }
+    });
+
+</script>
+
+<script type="text/x-red" data-template-name="tradfri-remote">
+    <div class="form-row">
+        <label for="node-input-connection"><i class="fa fa-cog"></i> Connection</label>
+        <input type="text" id="node-input-connection" placeholder="Connection">
+    </div>
+    <div class="form-row">
+        <label for="node-input-deviceId"><i class="fa fa-power-off"></i> Remote</label>
+        <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+            <div style="position: absolute; left: 0px; right: 40px;">
+                <select id="node-input-deviceId" style="width: 100%">
+                    <option value="-1" selected="selected">None</option>
+
+                </select>
+            </div>
+            <a id="node-input-lookup-connection" class="editor-button" style="position: absolute; right: 0px; top: 0px;"><i id="tradfri-deviceId-refresh-spinner" class="fa fa-refresh"></i></a>
+        </div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="tradfri-remote">
+    <p>Interface for IKEA Tradfri devices</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">string</span></dt>
+        <dd>The payload can only be a single command to request a status update.</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">object</span></dt>
+        <dd>The status of the remote.</dd>
+        <dt>topic<span class="property-type">string</span></dt>
+    </dl>
+
+    <h3>Details</h3>
+    The tradfri-remote node acts as both input and output for a IKEA Tradfri remote.
+
+    <h2>Controlling the node</h2>
+    Nodes can be programmatically controlled by sending a message with <code>msg.payload</code> set to the following strings:
+
+    <ul>
+        <li><code>"status"</code> The node will output the current status of its target remote.
+    </ul>
+
+    <h2>Status</h2>
+    If a status request is send to the node it will respond with a <code>msg.payload</code> containing the remotes current properties.
+
+    <ul>
+        <li><code>"name"</code>: string - The name of this accessory.</li>
+        <li><code>"createdAt"</code>: number - The unix timestamp of the creation of the device.</li>
+        <li><code>"instanceId"</code>: number - The ID under which the accessory is known to the gateway.</li>
+        <li><code>"type"</code>: number - The type of the accessory.</li>
+        <ul>
+            <li>remote (0) - A "normal" remote</li>
+            <li>slaveRemote (1) - A remote which has been paired with another remote. You can find details here on how to achieve this configuration.</li>
+            <li>lightbulb (2) - A lightbulb</li>
+            <li>plug (3) - A smart plug</li>
+            <li>motionSensor (4) - A motion sensor</li>
+            <li>signalRepeater (6) - A signal repeater</li>
+            <li>blind (7) - A blind</li>
+        </ul>
+        <li><code>"alive"</code>: boolean - Whether the gateway considers this device as alive.</li>
+        <li><code>"lastSeen"</code>: number - The unix timestamp of the last communication with the gateway.</li>
+        <li><code>"otaUpdateState"</code>: number - Unknown. Might be a boolean</li>
+        <li><code>"deviceInfo"</code>: object - Some additional information about the device.</li>
+        <ul>
+            <li><code>"firmwareVersion"</code>: string - The firmware version of the device.</li>
+            <li><code>"manufacturer"</code>: string - The device manufacturer.</li>
+            <li><code>"modelNumber"</code>: string - The name/type of the device.</li>
+            <li><code>"power"</code>: number - How the device is powered.</li>
+            <ul>
+                <li>Unknown (0)</li>
+                <li>InternalBattery (1)</li>
+                <li>ExternalBattery (2)</li>
+                <li>Battery (3) - Although not in the specs, this is apparently used by the remote</li>
+                <li>PowerOverEthernet (4)</li>
+                <li>USB (5)</li>
+                <li>AC_Power (6)</li>
+                <li>Solar (7)</li>
+            </ul>
+            <li><code>"serialNumber"</code>: string - Not used currently. Always ""</li>
+            <li><code>"battery"</code>: number - The battery percentage of a device. Only present if the device is battery-powered.</li>
+        </ul>
+        <li><code>"switchList"</code>: array - An array of all remotes belonging to this accessory.</li>
+        <ul>
+            <li><code>"name"</code>: string - Currently not supported.</li>
+            <li><code>"createdAt"</code>: number - Currently not supported.</li>
+            <li><code>"instanceId"</code>: number - Currently not supported.</li>
+        </ul>
+    </ul>
+
+</script>
+
+<!--- Group Node -->
+<script type="text/javascript">
+    var updateGroups = (currentGroupId) => {
+        let configNodeId = $('#node-input-connection').find(":selected").val();
+        if (configNodeId == null || configNodeId === '_ADD_') { return; }
+        $.get('tradfri/groups', {nodeId: configNodeId}, function(resp){
+            let groups = JSON.parse(resp);
+            if (!Array.isArray(groups) || groups.length <= 0) { return; }
+            $('#node-input-deviceId').find('option').not(':first').remove();
+            $.each(groups, function(i, group) {
+                let opt = {};
+                opt.value = group.id;
+                opt.text = group.name;
+                if (group.id === currentGroupId) {
+                    opt.selected = "selected";
+                }
+                $('#node-input-deviceId').append($('<option>', opt));
+            });
+        });
+    };
+
+    var updateScenes = (currentGroupId) => {
+        let configNodeId = $('#node-input-connection').find(":selected").val();
+        if (configNodeId == null || configNodeId === '_ADD_') { return; }
+        $.get('tradfri/scenes', {nodeId: configNodeId}, function(resp){
+            let scenes = JSON.parse(resp);
+            if (!Array.isArray(scenes) || scenes.length <= 0) { return; }
+            $('#node-option-scene').find('tr').not(':first').remove();
+            $.each(scenes, function(i, scene) {
+                if (scene.group === $('#node-input-deviceId').find(":selected").val()) {
+                    $('#node-option-scene').append('<tr><td>' + scene.name + '</td><td><code>{"sceneId": ' + scene.id + '}</code></td></tr>');
+                }
+            });
+        });
+    };
+
+    RED.nodes.registerType('tradfri-group',{
+        category: 'function',
+        color: '#9FE597',
+        defaults: {
+            name:            {value: ""},
+            deviceId:        {value: "", required: true, validate: RED.validators.number()},
+            deviceName:     {value: ""},
+            deviceType:        {value: "tradfri-group"},
+            connection:        {value: "", type: "tradfri-connection"},
+            observe:        {value: true, required: true}
+        },
+        align: 'left',
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-sitemap',
+        label: function() {
+            return this.deviceName || "tradfri-group";
+        },
+        oneditprepare: function() {
+            var node = this;
+            $('#node-input-connection').change(function(){
+                updateGroups(node.deviceId);
+                updateScenes(node.deviceId);
+            });
+            $('#tradfri-deviceId-refresh').click(function(){
+                updateGroups(node.deviceId);
+                updateScenes(node.deviceId);
+            });
+            $('#node-input-deviceId').change(function(){
+                updateScenes(node.deviceId);
+            });
+            $(document).ready(function() {
+                $('#node-input-msgPassthrough').prop('checked', node.observe);
+            });
+        },
+        oneditsave: function() {
+            this.deviceName = $('#node-input-deviceId').find(":selected").text();
+        }
+    });
+
+</script>
+
+<style>
+    th {
+        text-align: left;
+    }
+</style>
+
+<script type="text/x-red" data-template-name="tradfri-group">
+    <div class="form-row">
+        <label for="node-input-connection"><i class="fa fa-cog"></i> Connection</label>
+        <input type="text" id="node-input-connection" placeholder="Connection">
+    </div>
+    <div class="form-row">
+        <label for="node-input-deviceId"><i class="fa fa-sitemap"></i> Group</label>
+        <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+            <div style="position: absolute; left: 0px; right: 40px;">
+                <select id="node-input-deviceId" style="width: 100%">
+                    <option value="-1" selected="selected">None</option>
+                </select>
+            </div>
+            <a id="node-input-lookup-connection" class="editor-button" style="position: absolute; right: 0px; top: 0px;"><i id="tradfri-deviceId-refresh-spinner" class="fa fa-refresh"></i></a>
+        </div>
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-observe" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-observe" style="width: 70%;" >Observe group?</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-option-scene"><i class="fa fa-picture-o"></i> Available Scenes</label>
+        <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+            <div style="position: absolute; left: 0px; right: 40px;">
+                <table id="node-option-scene" style="width:100%">
+                  <tr>
+                    <th>Scene</th>
+                    <th>command</th>
+                  </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="tradfri-group">
+    <p>Interface for IKEA Tradfri devices</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">string  | object</span></dt>
+        <dd>The payload can either be a single command to the node (such as a status update request) sent as a string or an object with one or more commands targeting the group.</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload<span class="property-type">object</span></dt>
+        <dd>The status of the group.</dd>
+        <dt>topic<span class="property-type">string</span></dt>
+    </dl>
+
+    <h3>Details</h3>
+    The tradfri-group node acts as both input and output for a IKEA Tradfri group.
+
+    <h2>Controlling the node</h2>
+    Nodes can be programmatically controlled by sending a message with <code>msg.payload</code> set to one of the following strings:
+
+    <ul>
+        <li><code>"status"</code> The node will output the current status of its target group.
+    </ul>
+
+    <h2>Controlling the groups</h2>
+    A group contains several devices, usually a remote control and either lightbulbs, plugs or blinds. To control the group send the following properties as <code>msg.payload</code> to the node:
+
+    <strong>For a group of lights</strong>
+
+    <ul>
+        <li><code>"dimmer"</code>: number - The brightness in percent [0..100%].</li>
+
+        <li><code>"onOff"</code>: boolean - If the lightbulb is on (true) or off (false)</li>
+
+        <li><code>"transitionTime"</code>: number - The duration of state changes in seconds. Default 0.5s, not supported for on/off.</li>
+    </ul>
+
+    Additionally, this property is also supported:
+
+    <ul>
+        <li><code>"sceneId"</code>: number - Set this to the instanceId of a scene (or "mood" as IKEA calls them), to activate it.</li>
+    </ul>
+
+    <div><pre><code class="language-json">{
+  "onOff": boolean,
+  "dimmer": number,
+  "transitionTime": number
+}
+
+{
+  "sceneId": number
+}</code></pre></div>
+
+    <strong>For a group of blinds</strong>
+
+    <ul>
+        <li><code>"position"</code>: number - The position in percent [0..100%].</li>
+    </ul>
+
+    Additionally, this property is also supported:
+
+    <ul>
+        <li><code>"sceneId"</code>: number - Set this to the instanceId of a scene (or "mood" as IKEA calls them), to activate it.</li>
+    </ul>
+
+    <div><pre><code class="language-json">{
+  "position": number
+}
+
+{
+  "sceneId": number
+}</code></pre></div>
+
+    <strong>For a group of plugs</strong>
+
+    <ul>
+        <li><code>"onOff"</code>: boolean - If the plug is on (true) or off (false)</li>
+    </ul>
+
+    Additionally, this property is also supported:
+
+    <ul>
+        <li><code>"sceneId"</code>: number - Set this to the instanceId of a scene (or "mood" as IKEA calls them), to activate it.</li>
+    </ul>
+
+    <div><pre><code class="language-json">{
+  "onOff": boolean
+}
+
+{
+  "sceneId": number
+}</code></pre></div>
+
+    <h2>Observing</h2>
+    Currently observing the control of a group is not possible, due to the gateway only reporting changes to every single device.
+    If a group is renamed, a device removed or added to it, a scene redefined or
+    manually a status request sent to the node, it will respond with a <code>msg.payload</code> containing the groups current properties.
+
+    <ul>
+        <li><code>"name"</code>: string - The name of this group.</li>
+        <li><code>"createdAt"</code>: number - The unix timestamp of the creation of the group.</li>
+        <li><code>"instanceId"</code>: number - The ID under which the group is known to the gateway.</li>
+        <li><code>"onOff"</code>: boolean - If the group is on (true) or off (false)
+        <li><code>"dimmer</code>: number - The brightness in percent [0..100%].
+        <li><code>"deviceIDs</code>: object - An array of all instanceIds of the devices in this group.</li>
+        <li><code>"sceneId</code>: number - the instanceId of the current scene (or "mood" as IKEA calls them).</li>
+        <li><code>"groupType"</code>: number - The type of the group.</li>
+    </ul>
+
+</script>

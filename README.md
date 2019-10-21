@@ -1,7 +1,3 @@
-# NOTICE: CURRENTLY UNMAINTAINED
-
-After returning two hubs to IKEA I removed all of their devices from my home (except for a stray E14 bulb for which couldn't find a replacement). Compared to similar devices on the market, I found Trådfri too unstable and unreliable. That was over a year ago, so things might have changed since then (or maybe I was just unlucky to begin with). I was planning on buying another hub just to address the issues but unfortunately haven't found time to do it. If anyone is interested, help would be welcome!
-
 # node-red-contrib-node-tradfri
 
 Node-RED node to interface with IKEA Tradfri lights without any external binaries thanks to [node-tradfri](https://github.com/AlCalzone/node-tradfri-client).
@@ -10,42 +6,125 @@ Node-RED node to interface with IKEA Tradfri lights without any external binarie
 * Support for observation (i.e. reporting on changes to the light).
 
 ## Usage
-Only one node (besides the config node) are necessary for operation. After the configuration has been successful -- either by providing an existing identity and PSK or by generating new ones by providing the security code from the gateway -- simply select which light to target and check if the node should observe the device as well.
+There is one node for each accessory type (besides the config node). After the configuration has been successful -- either by providing an existing identity and PSK or by generating new ones by providing the security code from the gateway -- simply select which accessory or group to target and check if the node should observe the device as well.
 
 ### Controlling the node
 Nodes can be programmatically controlled by sending a message with `msg.payload` set to one of the following strings:
-* `"status"` The node will output the current status of its target light.
+* `"status"` The node will output the current status of its target accessory.
 
-### Controlling the light
-Lights can be controlled by sending an objet with one or more of the following properties as `msg.payload` to the node.
-* `on` `boolean` Turn the light on or off.
-* `brightness` `number` `[0,100]` The brightness of the light.
-* `colorTemperature` `number` `[0,100]` The color temperature of the light.
-* `color` `string` Sets the color of the light. For WS-bulbs, `F5FAF6`, `F1E0B5` and `EFD275` will set the light to the default cold, normal and warm temperatures respectively.
-* `transition` `number` The default transition time for operations. Will only work for single operation commands and not for on/off. Defaults to 0. 
-* `hue` `number` `[0,365]` Sets the hue of the light. Only for CWS. (UNTESTED)
-* `saturation` `number` `[0,100]` Sets the saturation of the light. Only for CWS. (UNTESTED)
+### Controlling the blinds
+A blind's position can be controled by sending an object with the following property as `msg.payload` to the node.
 
-### Output
-If the node is set to observe and the target light is updated or if triggered manually by sending a `"status"` request as `msg.payload` to the node, the node will send a `msg.payload` with the current status of the light.
-* `id` `number` The id of the light.
-* `name` `string` The given name of the light.
-* `model` `string` The model of the light.
-* `firmware` `string` The firmware of the light.
-* `alive` `boolean` True if the gateway can communicate with the light, false if not.
-* `on` `boolean` True if the light is on, false if not.
-* `brightness` `number` `[0,100]` The brightness of the light.
-* `colorTemperature` `number` `[0,100]` The color temperature of the light.
-* `color` `string` The hex-code for the color of the light. Only fully supported by CWS bulbs.
-* `colorX` `number` The x component of the xy-color.
-* `colorY` `number` The y component of the xy-color.
-* `transition` `number` The default transition time for operations. However, since the default value of 0.5 makes it impossible to send temperature and brightness updates in the same command, this is overridden and set to 0 by default.
-* `created` `number` Probably when the light was paired with the gateway for the first time, measured in epoch time.
-* `seen` `number` When the light was last interacted with by the gateway (or similar), measured in epoch time.
-* `type` `number` The type of device where 2 is light.
-* `power` `number` The type of power source powering the light. Will most likely always be 1.
+* `"position"`: number - The position in percent [0..100%].
+
+### Controlling the lights
+Lightbulbs can be controlled by sending an object with one or more of the following properties as `msg.payload` to the node.
+
+**All** of them support the most basic properties, which are
+* `"dimmer"`: number - The brightness in percent [0..100%].
+* `"onOff"`: boolean - If the lightbulb is on (true) or off (false)
+* `"transitionTime"`: number - The duration of state changes in seconds. Default 0.5s, not supported for on/off.
+
+**White spectrum** lightbulbs also support
+* `"colorTemperature"`: number - The color temperature in percent, where 0% equals cold white and 100% equals warm white.
+
+**RGB** lightbulbs have the following properties:
+* `"color"`: string - The 6 digit hex number representing the lightbulb's color. Don't use any prefixes like "#", only the hex number itself!
+* `"hue"`: number - The color's hue [0..360°].
+* `"saturation"`: number - The color's saturation [0..100%].
+
+### Controlling the plugs (Untested)
+Control a plug by sending an object with the following property as `msg.payload` to the node.
+
+* `"onOff"`: boolean - If the plug is on (true) or off (false).
+
+### Controlling the groups
+A group contains several devices, usually a remote control and either lightbulbs, plugs or blinds. To control the group send the following properties as `msg.payload` to the node:
+
+**For a group of lights**
+* `"dimmer"`: number - The brightness in percent [0..100%].
+* `"onOff"`: boolean - If the lightbulb is on (true) or off (false)
+* `"transitionTime"`: number - The duration of state changes in seconds. Default 0.5s, not supported for on/off.
+
+**For a group of blinds**
+* `"position"`: number - The position in percent [0..100%].
+
+**For a group of plugs**
+* `"onOff"`: boolean - If the plug is on (true) or off (false)
+
+Additionally, this property is also supported:
+* `"sceneId"`: number - Set this to the instanceId of a scene (or "mood" as IKEA calls them), to activate it.
+
+### Status node output
+If a status request is send or a device's state is updated, the node will respond with a `msg.payload` containing its current properties.
+
+* `"name"`: string - The name of this accessory.
+* `"createdAt"`: number - The unix timestamp of the creation of the device.
+* `"instanceId"`: number - The ID under which the accessory is known to the gateway.
+* `"type"`: number - The type of the accessory.
+	- remote (0) - A "normal" remote
+	- slaveRemote (1) - A remote which has been paired with another remote. You can find details here on how to achieve this configuration.
+	- lightbulb (2) - A lightbulb
+	- plug (3) - A smart plug
+	- motionSensor (4) - A motion sensor
+	- signalRepeater (6) - A signal repeater
+	- blind (7) - A blind
+* `"alive"`: boolean - Whether the gateway considers this device as alive.
+* `"lastSeen"`: number - The unix timestamp of the last communication with the gateway.
+* `"otaUpdateState"`: number - Unknown. Might be a boolean
+* `"deviceInfo"`: object - Some additional information about the device.
+	- `"firmwareVersion"`: string - The firmware version of the device.
+	- `"manufacturer"`: string - The device manufacturer.
+	- `"modelNumber"`: string - The name/type of the device.
+	- `"power"`: number - How the device is powered.
+		* Unknown (0)
+		* InternalBattery (1)
+		* ExternalBattery (2)
+		* Battery (3) - Although not in the specs, this is apparently used by the remote
+		* PowerOverEthernet (4)
+		* USB (5)
+		* AC_Power (6)
+		* Solar (7)
+	- `"serialNumber"`: string - Not used currently. Always ""
+	- `"battery"`: number - The battery percentage of a device. Only present if the device is battery-powered.
+* `"switchList"`: array - An array of all remotes belonging to this accessory.
+	- `"name"`: string - Currently not supported.
+	- `"createdAt"`: number - Currently not supported.
+	- `"instanceId"`: number - Currently not supported.
+* `"sensorList"`: array - An array of all sensors belonging to this accessory.
+	- `"name"`: string - Currently not supported.
+	- `"createdAt"`: number - Currently not supported.
+	- `"instanceId"`: number - Currently not supported.
+	- `"appType"`: string - Currently not supported.
+	- `"sensorType"`: string - Currently not supported.
+	- `"minMeasuredValue"`: number - Currently not supported.
+	- `"maxMeasuredValue"`: number - Currently not supported.
+	- `"minRangeValue"`: number - Currently not supported.
+	- `"maxRangeValue"`: number - Currently not supported.
+	- `"resetMinMaxMeasureValue"`: boolean - Currently not supported.
+	- `"sensorValue"`: number - Currently not supported.
+	- `"unit"`: string - Currently not supported.
+* `"plugList"`: array - An array of all plugs belonging to this accessory.
+	- `"onOff"`: boolean - If the plug is on (true) or off (false).
+	- `"isSwitchable"`: boolean - Whether the plug supports on/off (always true).
+	- `"isDimmable"`: boolean - Whether the plug supports setting the dimmer value (always false for now).
+* `"lightList"`: array - An array of all lights belonging to this accessory.
+	- `"onOff"`: boolean - If the lightbulb is on (true) or off (false)
+	- `"dimmer"`: number - The brightness in percent [0..100%].
+	- `"transitionTime"`: number - The duration of state changes in seconds. Default 0.5s, not supported for on/off.
+	- `"colorTemperature"`: number - The color temperature in percent, where 0% equals cold white and 100% equals white.
+	- `"color"`: string - The 6 digit hex number representing the lightbulb's color.
+	- `"colorX"`: number - The x component of the xy-color
+	- `"colorY"`: number - The y component of the xy-color
+	- `"hue"`: number - The color's hue [0..360°].
+	- `"saturation"`: number - The color's saturation [0..100%].
+* `"blindList"`: array - An array of all blinds belonging to this accessory.
+	- `"position"`: number - The position in percent [0..100%].
 
 ## Changelog
+
+### 0.2.0
+* Added group and scene control, blind, plug, remote and sensor support.
 
 ### 0.1.2
 * Moved output status object from `msg.payload.light` to `msg.payload`.
