@@ -203,7 +203,7 @@ module.exports = function (RED) {
                 RED.log.info(severity + ", " + message);
             };
 
-            let client = new ikea.IKEAClient(node.address);
+            let client = new ikea.TradfriClient(node.address);
 
             if (node.identity == null && node.psk == null) {
                 const { identity, psk } = yield client.authenticate(node.securityCode);
