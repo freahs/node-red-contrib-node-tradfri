@@ -18,9 +18,12 @@
             "ikea": "node-ikea.js"
         }
     },
+    "publishConfig": {
+        "registry":"https://npm.pkg.github.com/"
+    },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/fetchbot/node-red-contrib-ikea-home-smart.git"
+        "url": "https://github.com/fetchbot/node-red-contrib-ikea-home-smart.git"
     },
     "author": {
         "name": "fetchbot"
