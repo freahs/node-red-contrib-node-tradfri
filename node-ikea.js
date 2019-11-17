@@ -9,11 +9,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 
-const tradfri = require("node-tradfri-client");
+const ikea = require("node-tradfri-client");
 
 module.exports = function (RED) {
 
-    RED.httpAdmin.get('/tradfri/blinds', RED.auth.needsPermission('tradfri-blind.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/blinds', RED.auth.needsPermission('ikea-blind.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -28,7 +28,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/tradfri/lights', RED.auth.needsPermission('tradfri-light.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/lights', RED.auth.needsPermission('ikea-light.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -43,7 +43,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/tradfri/plugs', RED.auth.needsPermission('tradfri-plug.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/plugs', RED.auth.needsPermission('ikea-plug.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -58,7 +58,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/tradfri/sensors', RED.auth.needsPermission('tradfri-sensor.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/sensors', RED.auth.needsPermission('ikea-sensor.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -73,7 +73,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/tradfri/remotes', RED.auth.needsPermission('tradfri-remote.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/remotes', RED.auth.needsPermission('ikea-remote.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -88,7 +88,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/tradfri/groups', RED.auth.needsPermission('tradfri-group.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/groups', RED.auth.needsPermission('ikea-group.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -103,7 +103,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/tradfri/scenes', RED.auth.needsPermission('tradfri-scene.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/scenes', RED.auth.needsPermission('ikea-scene.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -120,7 +120,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    function TradfriConnectionNode(config) {
+    function IKEAConnectionNode(config) {
         var node = this;
 
         RED.nodes.createNode(node, config);
@@ -134,7 +134,7 @@ module.exports = function (RED) {
             RED.log.error("Must provide both identity and PSK or leave both blank to generate new credentials from security code.");
         }
         if (node.identity == null && node.psk == null && node.securityCode == null) {
-            RED.log.error("Must provide either identity and PSK or a security code to connect to the Tradfri hub");
+            RED.log.error("Must provide either identity and PSK or a security code to connect to the IKEA hub");
         }
 
         var _blinds = {};
@@ -148,19 +148,19 @@ module.exports = function (RED) {
         var _client = null;
 
         var _deviceUpdatedCallback = (accessory) => {
-            if (accessory.type === tradfri.AccessoryTypes.blind) {
+            if (accessory.type === ikea.AccessoryTypes.blind) {
                 _blinds[accessory.instanceId] = accessory;
                 RED.log.debug(`Blind ${accessory.instanceId} found`);
-            } else if (accessory.type === tradfri.AccessoryTypes.lightbulb) {
+            } else if (accessory.type === ikea.AccessoryTypes.lightbulb) {
                 _lights[accessory.instanceId] = accessory;
                 RED.log.debug(`Light ${accessory.instanceId} found`);
-            } else if (accessory.type === tradfri.AccessoryTypes.plug) {
+            } else if (accessory.type === ikea.AccessoryTypes.plug) {
                 _plugs[accessory.instanceId] = accessory;
                 RED.log.debug(`Plug ${accessory.instanceId} found`);
-            } else if (accessory.type === tradfri.AccessoryTypes.motionSensor) {
+            } else if (accessory.type === ikea.AccessoryTypes.motionSensor) {
                 _sensors[accessory.instanceId] = accessory;
                 RED.log.debug(`Sensor ${accessory.instanceId} found`);
-            } else if (accessory.type === tradfri.AccessoryTypes.remote || accessory.type === tradfri.AccessoryTypes.slaveRemote) {
+            } else if (accessory.type === ikea.AccessoryTypes.remote || accessory.type === ikea.AccessoryTypes.slaveRemote) {
                 _remotes[accessory.instanceId] = accessory;
                 RED.log.debug(`Remote ${accessory.instanceId} found`);
             }
@@ -203,7 +203,7 @@ module.exports = function (RED) {
                 RED.log.info(severity + ", " + message);
             };
 
-            let client = new tradfri.TradfriClient(node.address);
+            let client = new ikea.IKEAClient(node.address);
 
             if (node.identity == null && node.psk == null) {
                 const { identity, psk } = yield client.authenticate(node.securityCode);
@@ -234,7 +234,7 @@ module.exports = function (RED) {
                     yield _setupClient();
                 }
                 catch (e) {
-                    RED.log.trace(`[Tradfri: ${node.id}] ${e.toString()}, reconnecting...`);
+                    RED.log.trace(`[IKEA: ${node.id}] ${e.toString()}, reconnecting...`);
                 }
                 yield new Promise(resolve => setTimeout(resolve, timeout));
             }
@@ -246,10 +246,10 @@ module.exports = function (RED) {
             try {
                 let client = yield node.getClient();
                 let res = yield client.ping();
-                RED.log.trace(`[Tradfri: ${node.id}] ping returned '${res}'`);
+                RED.log.trace(`[IKEA: ${node.id}] ping returned '${res}'`);
             }
             catch (e) {
-                RED.log.trace(`[Tradfri: ${node.id}] ping returned '${e.toString()}'`);
+                RED.log.trace(`[IKEA: ${node.id}] ping returned '${e.toString()}'`);
             }
         }), pingInterval * 1000);
 
@@ -392,14 +392,14 @@ module.exports = function (RED) {
                 _listeners[instanceId] = {};
             }
             _listeners[instanceId][nodeId] = callback;
-            RED.log.info(`[Tradfri: ${nodeId}] registered event listener for ${instanceId}`);
+            RED.log.info(`[IKEA: ${nodeId}] registered event listener for ${instanceId}`);
         };
 
         node.unregister = (nodeId) => {
             for (let instanceId in _listeners) {
                 if (_listeners[instanceId].hasOwnProperty(nodeId)) {
                     delete _listeners[instanceId][nodeId];
-                    RED.log.info(`[Tradfri: ${nodeId}] unregistered event listeners`);
+                    RED.log.info(`[IKEA: ${nodeId}] unregistered event listeners`);
                 }
             }
         };
@@ -407,11 +407,11 @@ module.exports = function (RED) {
         node.on('close', () => {
             clearInterval(_ping);
             _client.destroy();
-            RED.log.debug(`[Tradfri: ${node.id}] Config was closed`);
+            RED.log.debug(`[IKEA: ${node.id}] Config was closed`);
         });
     }
 
-    RED.nodes.registerType("tradfri-connection", TradfriConnectionNode, {
+    RED.nodes.registerType("ikea-connection", IKEAConnectionNode, {
         credentials: {
             securityCode: { type: "text" },
             identity: { type: "text" },
@@ -419,7 +419,7 @@ module.exports = function (RED) {
         }
     });
 
-    function TradfriNode(config) {
+    function IKEANode(config) {
 
         var node = this;
         RED.nodes.createNode(node, config);
@@ -440,31 +440,31 @@ module.exports = function (RED) {
             delete msg.options;
             delete msg.client;
 
-            RED.log.trace(`[Tradfri: ${node.id}] recieved update for '${msg.name}' (${msg.instanceId})`);
+            RED.log.trace(`[IKEA: ${node.id}] recieved update for '${msg.name}' (${msg.instanceId})`);
             node.send({ topic: node.topic, payload: msg });
         };
 
         var _handleStatus = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let payload;
-                if (node.deviceType === 'tradfri-blind') {
+                if (node.deviceType === 'ikea-blind') {
                     payload = yield _config.getBlind(node.deviceId);
-                } else if (node.deviceType === 'tradfri-light') {
+                } else if (node.deviceType === 'ikea-light') {
                     payload = yield _config.getLight(node.deviceId);
-                } else if (node.deviceType === 'tradfri-plug') {
+                } else if (node.deviceType === 'ikea-plug') {
                     payload = yield _config.getPlug(node.deviceId);
-                } else if (node.deviceType === 'tradfri-sensor') {
+                } else if (node.deviceType === 'ikea-sensor') {
                     payload = yield _config.getSensor(node.deviceId);
-                } else if (node.deviceType === 'tradfri-remote') {
+                } else if (node.deviceType === 'ikea-remote') {
                     payload = yield _config.getRemote(node.deviceId);
-                } else if (node.deviceType === 'tradfri-group') {
+                } else if (node.deviceType === 'ikea-group') {
                     payload = yield _config.getGroup(node.deviceId);
                 }
                 _send(payload);
-                RED.log.trace(`[Tradfri: ${node.id}] Status request successful`);
+                RED.log.trace(`[IKEA: ${node.id}] Status request successful`);
             }
             catch (e) {
-                RED.log.info(`[Tradfri: ${node.id}] Status request unsuccessful, '${e.toString()}'`);
+                RED.log.info(`[IKEA: ${node.id}] Status request unsuccessful, '${e.toString()}'`);
             }
         });
 
@@ -475,11 +475,11 @@ module.exports = function (RED) {
                 if (Object.keys(blindOp).length > 0) {
                     let client = yield _config.getClient();
                     let res = yield client.operateBlind(blind, blindOp);
-                    RED.log.trace(`[Tradfri: ${node.id}] BlindOp '${JSON.stringify(blindOp)}' returned '${res}'`);
+                    RED.log.trace(`[IKEA: ${node.id}] BlindOp '${JSON.stringify(blindOp)}' returned '${res}'`);
                 }
             }
             catch (e) {
-                RED.log.info(`[Tradfri: ${node.id}] BlindOp '${JSON.stringify(blindOp)}' unsuccessful, '${e.toString()}'`);
+                RED.log.info(`[IKEA: ${node.id}] BlindOp '${JSON.stringify(blindOp)}' unsuccessful, '${e.toString()}'`);
             }
         });
 
@@ -490,11 +490,11 @@ module.exports = function (RED) {
                 if (Object.keys(lightOp).length > 0) {
                     let client = yield _config.getClient();
                     let res = yield client.operateLight(light, lightOp);
-                    RED.log.trace(`[Tradfri: ${node.id}] LightOp '${JSON.stringify(lightOp)}' returned '${res}'`);
+                    RED.log.trace(`[IKEA: ${node.id}] LightOp '${JSON.stringify(lightOp)}' returned '${res}'`);
                 }
             }
             catch (e) {
-                RED.log.info(`[Tradfri: ${node.id}] LightOp '${JSON.stringify(lightOp)}' unsuccessful, '${e.toString()}'`);
+                RED.log.info(`[IKEA: ${node.id}] LightOp '${JSON.stringify(lightOp)}' unsuccessful, '${e.toString()}'`);
             }
         });
 
@@ -505,11 +505,11 @@ module.exports = function (RED) {
                 if (Object.keys(plugOp).length > 0) {
                     let client = yield _config.getClient();
                     let res = yield client.operatePlug(plug, plugOp);
-                    RED.log.trace(`[Tradfri: ${node.id}] PlugOp '${JSON.stringify(plugOp)}' returned '${res}'`);
+                    RED.log.trace(`[IKEA: ${node.id}] PlugOp '${JSON.stringify(plugOp)}' returned '${res}'`);
                 }
             }
             catch (e) {
-                RED.log.info(`[Tradfri: ${node.id}] PlugOp '${JSON.stringify(plugOp)}' unsuccessful, '${e.toString()}'`);
+                RED.log.info(`[IKEA: ${node.id}] PlugOp '${JSON.stringify(plugOp)}' unsuccessful, '${e.toString()}'`);
             }
         });
 
@@ -520,11 +520,11 @@ module.exports = function (RED) {
                 if (Object.keys(groupOp).length > 0) {
                     let client = yield _config.getClient();
                     let res = yield client.operateGroup(group, groupOp, true);
-                    RED.log.trace(`[Tradfri: ${node.id}] GroupOp '${JSON.stringify(groupOp)}' returned '${res}'`);
+                    RED.log.trace(`[IKEA: ${node.id}] GroupOp '${JSON.stringify(groupOp)}' returned '${res}'`);
                 }
             }
             catch (e) {g
-                RED.log.info(`[Tradfri: ${node.id}] GroupOp '${JSON.stringify(groupOp)}' unsuccessful, '${e.toString()}'`);
+                RED.log.info(`[IKEA: ${node.id}] GroupOp '${JSON.stringify(groupOp)}' unsuccessful, '${e.toString()}'`);
             }
         });
 
@@ -541,13 +541,13 @@ module.exports = function (RED) {
                     let isStatus = msg.payload.hasOwnProperty('status');
                     if (isStatus) {
                         _handleStatus();
-                    } else if (node.deviceType === 'tradfri-blind') {
+                    } else if (node.deviceType === 'ikea-blind') {
                         _handleBlindOp(msg.payload);
-                    } else if (node.deviceType === 'tradfri-light') {
+                    } else if (node.deviceType === 'ikea-light') {
                         _handleLightOp(msg.payload);
-                    } else if (node.deviceType === 'tradfri-plug') {
+                    } else if (node.deviceType === 'ikea-plug') {
                         _handlePlugOp(msg.payload);
-                    } else if (node.deviceType === 'tradfri-group') {
+                    } else if (node.deviceType === 'ikea-group') {
                         _handleGroupOp(msg.payload);
                     }
                 }
@@ -555,14 +555,14 @@ module.exports = function (RED) {
         });
 
         node.on('close', function () {
-            RED.log.debug(`[Tradfri: ${node.id}] Node was closed`);
+            RED.log.debug(`[IKEA: ${node.id}] Node was closed`);
             _config.unregister(node.id);
         });
     }
-    RED.nodes.registerType("tradfri-blind", TradfriNode);
-    RED.nodes.registerType("tradfri-light", TradfriNode);
-    RED.nodes.registerType("tradfri-plug", TradfriNode);
-    RED.nodes.registerType("tradfri-sensor", TradfriNode);
-    RED.nodes.registerType("tradfri-remote", TradfriNode);
-    RED.nodes.registerType("tradfri-group", TradfriNode);
+    RED.nodes.registerType("ikea-blind", IKEANode);
+    RED.nodes.registerType("ikea-light", IKEANode);
+    RED.nodes.registerType("ikea-plug", IKEANode);
+    RED.nodes.registerType("ikea-sensor", IKEANode);
+    RED.nodes.registerType("ikea-remote", IKEANode);
+    RED.nodes.registerType("ikea-group", IKEANode);
 };

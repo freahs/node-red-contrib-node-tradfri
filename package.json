@@ -1,7 +1,7 @@
 {
-    "name": "node-red-contrib-node-tradfri",
+    "name": "node-red-contrib-ikea-home-smart",
     "version": "0.2.0",
-    "description": "Node-RED node to utilize IKEA Trådfri devices.",
+    "description": "Node-RED node to utilize IKEA smart home devices.",
     "dependencies": {
         "node-tradfri-client": "^2.0.1"
     },
@@ -9,16 +9,18 @@
         "node-red",
         "ikea",
         "tradfri",
+        "home",
+        "smart",
         "coap"
     ],
     "node-red": {
         "nodes": {
-            "tradfri": "node-tradfri.js"
+            "ikea": "node-ikea.js"
         }
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/fetchbot/node-red-contrib-node-tradfri.git"
+        "url": "git+https://github.com/fetchbot/node-red-contrib-ikea-home-smart.git"
     },
     "author": {
         "name": "fetchbot"

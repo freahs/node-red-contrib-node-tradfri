@@ -1,6 +1,6 @@
-# node-red-contrib-node-tradfri
+# node-red-contrib-ikea-home-smart
 
-Node-RED node to interface with IKEA Tradfri lights without any external binaries thanks to [node-tradfri](https://github.com/AlCalzone/node-tradfri-client).
+Node-RED node to interface with IKEA smart home products as tradfri lights or blinds without any external binaries thanks to [node-tradfri](https://github.com/AlCalzone/node-tradfri-client).
 
 * All operations (brightness, color temperature, color, etc.) supported by the gateway are available.
 * Support for observation (i.e. reporting on changes to the light).
