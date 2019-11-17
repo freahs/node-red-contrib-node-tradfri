@@ -1,38 +1,29 @@
 {
-    "name": "node-red-contrib-node-tradfri",
-    "version": "0.1.2",
-    "description": "Node-RED node to utilize IKEA Trådfri devices. Fully implemented in Node.js.",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/freahs/node-red-contrib-node-tradfri.git"
+    "name": "node-red-contrib-ikea-home-smart",
+    "version": "0.2.0",
+    "description": "Node-RED node to utilize IKEA smart home devices.",
+    "dependencies": {
+        "node-tradfri-client": "^2.0.1"
     },
     "keywords": [
         "node-red",
         "ikea",
-        "tradfri"
+        "tradfri",
+        "home",
+        "smart",
+        "coap"
     ],
-    "author": {
-        "name": "freahs",
-        "email": "freahs@kth.se"
-    },
-    "license": "GPL-3.0",
-    "devDependencies": {
-        "@types/node": "^8.5.5",
-        "del": "^3.0.0",
-        "gulp": "^3.9.1",
-        "gulp-shell": "^0.6.5",
-        "gulp-typescript": "^3.2.3",
-        "typescript": "^2.6.2"
-    },
-    "dependencies": {
-        "node-tradfri-client": "^0.5.5"
-    },
     "node-red": {
         "nodes": {
-            "tradfri": "dist/node-tradfri.js"
+            "ikea": "node-ikea.js"
         }
-    }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/fetchbot/node-red-contrib-ikea-home-smart.git"
+    },
+    "author": {
+        "name": "fetchbot"
+    },
+    "license": "GPL-3.0"
 }
