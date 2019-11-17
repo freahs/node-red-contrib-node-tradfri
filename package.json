@@ -1,5 +1,5 @@
 {
-    "name": "node-red-contrib-ikea-home-smart",
+    "name": "@fetchbot/node-red-contrib-ikea-home-smart",
     "version": "0.2.0",
     "description": "Node-RED node to utilize IKEA smart home devices.",
     "dependencies": {
