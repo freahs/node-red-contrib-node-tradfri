@@ -469,7 +469,7 @@ module.exports = function (RED) {
         });
 
         var _handleBlindOp = (blind) => __awaiter(this, void 0, void 0, function* () {
-            let blindOp = Object.assign({ transitionTime: 0 }, blind);
+            let blindOp = Object.assign(blind);
             try {
                 let blind = yield _config.getBlind(node.deviceId);
                 if (Object.keys(blindOp).length > 0) {
@@ -499,7 +499,7 @@ module.exports = function (RED) {
         });
 
         var _handlePlugOp = (plug) => __awaiter(this, void 0, void 0, function* () {
-            let plugOp = Object.assign({ transitionTime: 0 }, plug);
+            let plugOp = Object.assign(plug);
             try {
                 let plug = yield _config.getPlug(node.deviceId);
                 if (Object.keys(plugOp).length > 0) {
