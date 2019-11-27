@@ -469,7 +469,7 @@ module.exports = function (RED) {
         });
 
         var _handleBlindOp = (blind) => __awaiter(this, void 0, void 0, function* () {
-            let blindOp = Object.assign(blind);
+            let blindOp = Object.assign({ force: true }, blind);
             try {
                 let blind = yield _config.getBlind(node.deviceId);
                 if (Object.keys(blindOp).length > 0) {
