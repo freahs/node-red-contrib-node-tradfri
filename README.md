@@ -124,6 +124,7 @@ If a status request is send or a device's state is updated, the node will respon
 ## Changelog
 
 ### 0.2.0
+* Fork from [freahs/node-red-contrib-node-tradfri](https://github.com/freahs/node-red-contrib-node-tradfri)
 * Added group and scene control, blind, plug, remote and sensor support.
 
 ### 0.1.2
