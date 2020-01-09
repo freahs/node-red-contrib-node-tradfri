@@ -433,12 +433,32 @@ module.exports = function (RED) {
 
         var _config = RED.nodes.getNode(config.connection);
 
+        var _removeKeys = (obj, keys) => {
+            for (var prop in obj) {
+                if (obj.hasOwnProperty(prop)) {
+                    switch (typeof(obj[prop])) {
+                        case 'object':
+                            if (keys.indexOf(prop) > -1) {
+                                delete obj[prop];
+                            } else {
+                                _removeKeys(obj[prop], keys);
+                            }
+                            break;
+                      default:
+                            if (keys.indexOf(prop) > -1) {
+                                delete obj[prop];
+                            }
+                            break;
+                    }
+                }
+            }
+        }
+
         var _send = (payload) => {
             let msg = Object.assign({}, payload);
+            msg = JSON.parse(JSON.stringify(msg));
 
-            delete msg.isProxy;
-            delete msg.options;
-            delete msg.client;
+            _removeKeys(msg, ['isProxy','options','client','_accessory','_modelName']);
 
             RED.log.trace(`[IKEA: ${node.id}] recieved update for '${msg.name}' (${msg.instanceId})`);
             node.send({ topic: node.topic, payload: msg });
