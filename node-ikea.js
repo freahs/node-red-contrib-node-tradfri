@@ -13,7 +13,7 @@ const ikea = require("node-tradfri-client");
 
 module.exports = function (RED) {
 
-    RED.httpAdmin.get('/ikea/blinds', RED.auth.needsPermission('ikea-blind.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/ikea-blinds', RED.auth.needsPermission('ikea-homesmart.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -28,7 +28,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/ikea/lights', RED.auth.needsPermission('ikea-light.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/ikea-lights', RED.auth.needsPermission('ikea-homesmart.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -43,7 +43,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/ikea/plugs', RED.auth.needsPermission('ikea-plug.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/ikea-plugs', RED.auth.needsPermission('ikea-homesmart.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -58,7 +58,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/ikea/sensors', RED.auth.needsPermission('ikea-sensor.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/ikea-sensors', RED.auth.needsPermission('ikea-homesmart.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -73,7 +73,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/ikea/remotes', RED.auth.needsPermission('ikea-remote.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/ikea-remotes', RED.auth.needsPermission('ikea-homesmart.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -88,7 +88,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/ikea/groups', RED.auth.needsPermission('ikea-group.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/ikea-groups', RED.auth.needsPermission('ikea-homesmart.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -103,7 +103,7 @@ module.exports = function (RED) {
         res.json(JSON.stringify(ret));
     });
 
-    RED.httpAdmin.get('/ikea/scenes', RED.auth.needsPermission('ikea-scene.read'), function (req, res) {
+    RED.httpAdmin.get('/ikea/ikea-scenes', RED.auth.needsPermission('ikea-homesmart.read'), function (req, res) {
 
         const node = RED.nodes.getNode(req.query.nodeId);
         if (!node) {
@@ -467,17 +467,17 @@ module.exports = function (RED) {
         var _handleStatus = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let payload;
-                if (node.deviceType === 'ikea-blind') {
+                if (node.deviceType === 'ikea-blinds') {
                     payload = yield _config.getBlind(node.deviceId);
-                } else if (node.deviceType === 'ikea-light') {
+                } else if (node.deviceType === 'ikea-lights') {
                     payload = yield _config.getLight(node.deviceId);
-                } else if (node.deviceType === 'ikea-plug') {
+                } else if (node.deviceType === 'ikea-plugs') {
                     payload = yield _config.getPlug(node.deviceId);
-                } else if (node.deviceType === 'ikea-sensor') {
+                } else if (node.deviceType === 'ikea-sensors') {
                     payload = yield _config.getSensor(node.deviceId);
-                } else if (node.deviceType === 'ikea-remote') {
+                } else if (node.deviceType === 'ikea-remotes') {
                     payload = yield _config.getRemote(node.deviceId);
-                } else if (node.deviceType === 'ikea-group') {
+                } else if (node.deviceType === 'ikea-groups') {
                     payload = yield _config.getGroup(node.deviceId);
                 }
                 _send(payload);
@@ -566,13 +566,13 @@ module.exports = function (RED) {
                     let isStatus = msg.payload.hasOwnProperty('status');
                     if (isStatus) {
                         _handleStatus();
-                    } else if (node.deviceType === 'ikea-blind') {
+                    } else if (node.deviceType === 'ikea-blinds') {
                         _handleBlindOp(msg.payload);
-                    } else if (node.deviceType === 'ikea-light') {
+                    } else if (node.deviceType === 'ikea-lights') {
                         _handleLightOp(msg.payload);
-                    } else if (node.deviceType === 'ikea-plug') {
+                    } else if (node.deviceType === 'ikea-plugs') {
                         _handlePlugOp(msg.payload);
-                    } else if (node.deviceType === 'ikea-group') {
+                    } else if (node.deviceType === 'ikea-groups') {
                         _handleGroupOp(msg.payload);
                     }
                 }
@@ -584,10 +584,5 @@ module.exports = function (RED) {
             _config.unregister(node.id);
         });
     }
-    RED.nodes.registerType("ikea-blind", IKEANode);
-    RED.nodes.registerType("ikea-light", IKEANode);
-    RED.nodes.registerType("ikea-plug", IKEANode);
-    RED.nodes.registerType("ikea-sensor", IKEANode);
-    RED.nodes.registerType("ikea-remote", IKEANode);
-    RED.nodes.registerType("ikea-group", IKEANode);
+    RED.nodes.registerType("ikea-homesmart", IKEANode);
 };
