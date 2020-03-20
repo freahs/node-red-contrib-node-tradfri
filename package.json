@@ -3,7 +3,7 @@
     "version": "0.2.5",
     "description": "Node-RED node to utilize IKEA smart home devices.",
     "dependencies": {
-        "node-tradfri-client": "^2.1.0"
+        "node-tradfri-client": "^2.1.4"
     },
     "keywords": [
         "node-red",
