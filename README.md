@@ -16,6 +16,7 @@ Nodes can be programmatically controlled by sending a message with `msg.payload`
 A blind's position can be controled by sending an object with the following property as `msg.payload` to the node.
 
 * `"position"`: number - The position in percent [0..100%].
+* `"trigger"`: number - A trigger event to stop a moving blind [0.0].
 
 ### Controlling the lights
 Lightbulbs can be controlled by sending an object with one or more of the following properties as `msg.payload` to the node.

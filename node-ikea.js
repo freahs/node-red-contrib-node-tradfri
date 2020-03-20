@@ -494,8 +494,13 @@ module.exports = function (RED) {
                 let blind = yield _config.getBlind(node.deviceId);
                 if (Object.keys(blindOp).length > 0) {
                     let client = yield _config.getClient();
-                    let res = yield client.operateBlind(blind, blindOp);
-                    RED.log.trace(`[IKEA: ${node.id}] BlindOp '${JSON.stringify(blindOp)}' returned '${res}'`);
+                    let res;
+                    if ('trigger' in blindOp) {
+                        res = yield client.request('/15001/' + node.deviceId,'put',{15015:[{5523:0.0}]})
+                    } else {
+                        res = yield client.operateBlind(blind, blindOp);
+                    }
+                    RED.log.debug(`[IKEA: ${node.id}] BlindOp '${JSON.stringify(blindOp)}' returned '${res}'`);
                 }
             }
             catch (e) {
