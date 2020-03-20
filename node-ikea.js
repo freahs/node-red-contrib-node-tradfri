@@ -200,9 +200,13 @@ module.exports = function (RED) {
 
         let _setupClient = () => __awaiter(this, void 0, void 0, function* () {
             let loggerFunction = (message, severity) => {
-                RED.log.info(severity + ", " + message);
+                if (severity !== "silly") {
+                    RED.log.debug(severity + ", " + message);
+                }
             };
 
+            //let client = new ikea.TradfriClient(node.address,{watchConnection:true});
+            //let client = new ikea.TradfriClient(node.address,loggerFunction);
             let client = new ikea.TradfriClient(node.address);
 
             if (node.identity == null && node.psk == null) {
@@ -235,9 +239,10 @@ module.exports = function (RED) {
                 }
                 catch (e) {
                     if (e.toString() === 'Error: Retransmit counter exceeded') {
+                        RED.log.trace(`[IKEA: ${node.id}] ${e.toString()}, resetting...`);
                         _client.reset();
                     } else {
-                    RED.log.trace(`[IKEA: ${node.id}] ${e.toString()}, reconnecting...`);
+                        RED.log.trace(`[IKEA: ${node.id}] ${e.toString()}, reconnecting...`);
                     }
                 }
                 yield new Promise(resolve => setTimeout(resolve, timeout));
@@ -400,14 +405,14 @@ module.exports = function (RED) {
                 _listeners[instanceId] = {};
             }
             _listeners[instanceId][nodeId] = callback;
-            RED.log.info(`[IKEA: ${nodeId}] registered event listener for ${instanceId}`);
+            RED.log.debug(`[IKEA: ${nodeId}] registered event listener for ${instanceId}`);
         };
 
         node.unregister = (nodeId) => {
             for (let instanceId in _listeners) {
                 if (_listeners[instanceId].hasOwnProperty(nodeId)) {
                     delete _listeners[instanceId][nodeId];
-                    RED.log.info(`[IKEA: ${nodeId}] unregistered event listeners`);
+                    RED.log.debug(`[IKEA: ${nodeId}] unregistered event listeners`);
                 }
             }
         };
@@ -468,7 +473,7 @@ module.exports = function (RED) {
 
             _removeKeys(msg, ['isProxy','options','client','_accessory','_modelName']);
 
-            RED.log.trace(`[IKEA: ${node.id}] recieved update for '${msg.name}' (${msg.instanceId})`);
+            RED.log.debug(`[IKEA: ${node.id}] recieved update for '${msg.name}' (${msg.instanceId})`);
             node.send({ topic: node.topic, payload: msg });
         };
 
@@ -489,10 +494,10 @@ module.exports = function (RED) {
                     payload = yield _config.getGroup(node.deviceId);
                 }
                 _send(payload);
-                RED.log.trace(`[IKEA: ${node.id}] Status request successful`);
+                RED.log.debug(`[IKEA: ${node.id}] Status request successful`);
             }
             catch (e) {
-                RED.log.info(`[IKEA: ${node.id}] Status request unsuccessful, '${e.toString()}'`);
+                RED.log.debug(`[IKEA: ${node.id}] Status request unsuccessful, '${e.toString()}'`);
             }
         });
 
@@ -512,7 +517,7 @@ module.exports = function (RED) {
                 }
             }
             catch (e) {
-                RED.log.info(`[IKEA: ${node.id}] BlindOp '${JSON.stringify(blindOp)}' unsuccessful, '${e.toString()}'`);
+                RED.log.debug(`[IKEA: ${node.id}] BlindOp '${JSON.stringify(blindOp)}' unsuccessful, '${e.toString()}'`);
             }
         });
 
@@ -523,11 +528,11 @@ module.exports = function (RED) {
                 if (Object.keys(lightOp).length > 0) {
                     let client = yield _config.getClient();
                     let res = yield client.operateLight(light, lightOp);
-                    RED.log.trace(`[IKEA: ${node.id}] LightOp '${JSON.stringify(lightOp)}' returned '${res}'`);
+                    RED.log.debug(`[IKEA: ${node.id}] LightOp '${JSON.stringify(lightOp)}' returned '${res}'`);
                 }
             }
             catch (e) {
-                RED.log.info(`[IKEA: ${node.id}] LightOp '${JSON.stringify(lightOp)}' unsuccessful, '${e.toString()}'`);
+                RED.log.debug(`[IKEA: ${node.id}] LightOp '${JSON.stringify(lightOp)}' unsuccessful, '${e.toString()}'`);
             }
         });
 
@@ -538,11 +543,11 @@ module.exports = function (RED) {
                 if (Object.keys(plugOp).length > 0) {
                     let client = yield _config.getClient();
                     let res = yield client.operatePlug(plug, plugOp);
-                    RED.log.trace(`[IKEA: ${node.id}] PlugOp '${JSON.stringify(plugOp)}' returned '${res}'`);
+                    RED.log.debug(`[IKEA: ${node.id}] PlugOp '${JSON.stringify(plugOp)}' returned '${res}'`);
                 }
             }
             catch (e) {
-                RED.log.info(`[IKEA: ${node.id}] PlugOp '${JSON.stringify(plugOp)}' unsuccessful, '${e.toString()}'`);
+                RED.log.debug(`[IKEA: ${node.id}] PlugOp '${JSON.stringify(plugOp)}' unsuccessful, '${e.toString()}'`);
             }
         });
 
@@ -553,11 +558,11 @@ module.exports = function (RED) {
                 if (Object.keys(groupOp).length > 0) {
                     let client = yield _config.getClient();
                     let res = yield client.operateGroup(group, groupOp, true);
-                    RED.log.trace(`[IKEA: ${node.id}] GroupOp '${JSON.stringify(groupOp)}' returned '${res}'`);
+                    RED.log.debug(`[IKEA: ${node.id}] GroupOp '${JSON.stringify(groupOp)}' returned '${res}'`);
                 }
             }
             catch (e) {g
-                RED.log.info(`[IKEA: ${node.id}] GroupOp '${JSON.stringify(groupOp)}' unsuccessful, '${e.toString()}'`);
+                RED.log.debug(`[IKEA: ${node.id}] GroupOp '${JSON.stringify(groupOp)}' unsuccessful, '${e.toString()}'`);
             }
         });
 
