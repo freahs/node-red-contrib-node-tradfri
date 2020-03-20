@@ -234,7 +234,11 @@ module.exports = function (RED) {
                     yield _setupClient();
                 }
                 catch (e) {
+                    if (e.toString() === 'Error: Retransmit counter exceeded') {
+                        _client.reset();
+                    } else {
                     RED.log.trace(`[IKEA: ${node.id}] ${e.toString()}, reconnecting...`);
+                    }
                 }
                 yield new Promise(resolve => setTimeout(resolve, timeout));
             }
@@ -243,13 +247,17 @@ module.exports = function (RED) {
         let pingInterval = 30;
 
         let _ping = setInterval(() => __awaiter(this, void 0, void 0, function* () {
+            let client;
             try {
-                let client = yield node.getClient();
+                client = yield node.getClient();
                 let res = yield client.ping();
                 RED.log.trace(`[IKEA: ${node.id}] ping returned '${res}'`);
+                if (!res) _reconnect();
             }
             catch (e) {
                 RED.log.trace(`[IKEA: ${node.id}] ping returned '${e.toString()}'`);
+                //client.reset();
+                _reconnect();
             }
         }), pingInterval * 1000);
 
