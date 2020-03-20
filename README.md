@@ -5,8 +5,15 @@ Node-RED node to interface with IKEA smart home products as tradfri lights or bl
 * All operations (brightness, color temperature, color, etc.) supported by the gateway are available.
 * Support for observation (i.e. reporting on changes to the light).
 
+# ⚠️ WARNING ⚠️
+### Version 0.3.X upgrade is a breaking change.
+This version **combines** the individual device nodes to a common node which can now be adjusted in the node configuration.
+
 ## Usage
-There is one node for each accessory type (besides the config node). After the configuration has been successful -- either by providing an existing identity and PSK or by generating new ones by providing the security code from the gateway -- simply select which accessory or group to target and check if the node should observe the device as well.
+There is one node to configure each accessory type (besides the config node). After the configuration has been successful -- either by providing an existing identity and PSK or by generating new ones by providing the security code from the gateway -- simply select which accessory or group to target and check if the node should observe the device as well.
+
+**Notice:**
+After configuring the gateway, you must apply the settings by deploying your flow. Only then can you create and configure the accessories.
 
 ### Controlling the node
 Nodes can be programmatically controlled by sending a message with `msg.payload` set to one of the following strings:
@@ -123,6 +130,11 @@ If a status request is send or a device's state is updated, the node will respon
 	- `"position"`: number - The position in percent [0..100%].
 
 ## Changelog
+
+### 0.3.0
+* One combined node for all device types
+* Temporary fix for the blind stop function
+* Automatic node restart after connection loss to the gateway
 
 ### 0.2.0
 * Fork from [freahs/node-red-contrib-node-tradfri](https://github.com/freahs/node-red-contrib-node-tradfri)
