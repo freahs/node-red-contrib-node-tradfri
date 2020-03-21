@@ -9,6 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 
+var cloneDeep = require('lodash/cloneDeep');
+
 const ikea = require("node-tradfri-client");
 
 module.exports = function (RED) {
@@ -468,8 +470,9 @@ module.exports = function (RED) {
         }
 
         var _send = (payload) => {
-            let msg = Object.assign({}, payload);
-            msg = JSON.parse(JSON.stringify(msg));
+            //let msg = Object.assign({}, payload);
+            //msg = JSON.parse(JSON.stringify(msg));
+            let msg = cloneDeep(payload);
 
             _removeKeys(msg, ['isProxy','options','client','_accessory','_modelName']);
 
