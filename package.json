@@ -1,6 +1,6 @@
 {
     "name": "@fetchbot/node-red-contrib-ikea-home-smart",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "description": "Node-RED node to utilize IKEA smart home devices.",
     "dependencies": {
         "node-tradfri-client": "^2.1.4",
