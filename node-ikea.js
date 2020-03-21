@@ -152,19 +152,19 @@ module.exports = function (RED) {
         var _deviceUpdatedCallback = (accessory) => {
             if (accessory.type === ikea.AccessoryTypes.blind) {
                 _blinds[accessory.instanceId] = accessory;
-                RED.log.debug(`Blind ${accessory.instanceId} found`);
+                //RED.log.debug(`Blind ${accessory.instanceId} found`);
             } else if (accessory.type === ikea.AccessoryTypes.lightbulb) {
                 _lights[accessory.instanceId] = accessory;
-                RED.log.debug(`Light ${accessory.instanceId} found`);
+                //RED.log.debug(`Light ${accessory.instanceId} found`);
             } else if (accessory.type === ikea.AccessoryTypes.plug) {
                 _plugs[accessory.instanceId] = accessory;
-                RED.log.debug(`Plug ${accessory.instanceId} found`);
+                //RED.log.debug(`Plug ${accessory.instanceId} found`);
             } else if (accessory.type === ikea.AccessoryTypes.motionSensor) {
                 _sensors[accessory.instanceId] = accessory;
-                RED.log.debug(`Sensor ${accessory.instanceId} found`);
+                //RED.log.debug(`Sensor ${accessory.instanceId} found`);
             } else if (accessory.type === ikea.AccessoryTypes.remote || accessory.type === ikea.AccessoryTypes.slaveRemote) {
                 _remotes[accessory.instanceId] = accessory;
-                RED.log.debug(`Remote ${accessory.instanceId} found`);
+                //RED.log.debug(`Remote ${accessory.instanceId} found`);
             }
 
             if (_listeners[accessory.instanceId]) {
@@ -176,7 +176,7 @@ module.exports = function (RED) {
 
         var _groupUpdatedCallback = (group) => {
             _groups[group.instanceId] = group;
-            RED.log.debug(`Group ${group.instanceId} found`);
+            //RED.log.debug(`Group ${group.instanceId} found`);
 
             if (_listeners[group.instanceId]) {
                 for (let nodeId in _listeners[group.instanceId]) {
@@ -190,8 +190,8 @@ module.exports = function (RED) {
                 _scenes[groupId] = [];
             }
             _scenes[groupId].push(scene);
-            RED.log.debug(`groupId ${groupId} found`);
-            RED.log.debug(`scene ${scene.instanceId} found`);
+            //RED.log.debug(`groupId ${groupId} found`);
+            //RED.log.debug(`scene ${scene.instanceId} found`);
 
             if (_listeners[scene.instanceId]) {
                 for (let nodeId in _listeners[scene.instanceId]) {
@@ -207,9 +207,10 @@ module.exports = function (RED) {
                 }
             };
 
-            //let client = new ikea.TradfriClient(node.address,{watchConnection:true});
+            //let client = new ikea.TradfriClient(node.address);
+            //let client = new ikea.TradfriClient(node.address,{"watchConnection":true});
             //let client = new ikea.TradfriClient(node.address,loggerFunction);
-            let client = new ikea.TradfriClient(node.address);
+            let client = new ikea.TradfriClient(node.address,{"customLogger":loggerFunction,"watchConnection":true});
 
             if (node.identity == null && node.psk == null) {
                 const { identity, psk } = yield client.authenticate(node.securityCode);
@@ -240,17 +241,13 @@ module.exports = function (RED) {
                     yield _setupClient();
                 }
                 catch (e) {
-                    if (e.toString() === 'Error: Retransmit counter exceeded') {
-                        RED.log.trace(`[IKEA: ${node.id}] ${e.toString()}, resetting...`);
-                        _client.reset();
-                    } else {
-                        RED.log.trace(`[IKEA: ${node.id}] ${e.toString()}, reconnecting...`);
-                    }
+                    RED.log.trace(`[IKEA: ${node.id}] ${e.toString()}, reconnecting...`);
                 }
                 yield new Promise(resolve => setTimeout(resolve, timeout));
             }
         });
 
+/*
         let pingInterval = 30;
 
         let _ping = setInterval(() => __awaiter(this, void 0, void 0, function* () {
@@ -259,15 +256,12 @@ module.exports = function (RED) {
                 client = yield node.getClient();
                 let res = yield client.ping();
                 RED.log.trace(`[IKEA: ${node.id}] ping returned '${res}'`);
-                if (!res) _reconnect();
             }
             catch (e) {
                 RED.log.trace(`[IKEA: ${node.id}] ping returned '${e.toString()}'`);
-                //client.reset();
-                _reconnect();
             }
         }), pingInterval * 1000);
-
+*/
         _reconnect();
 
         node.getClient = () => __awaiter(this, void 0, void 0, function* () {
